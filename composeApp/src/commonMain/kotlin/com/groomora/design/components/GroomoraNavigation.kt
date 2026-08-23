@@ -1,6 +1,7 @@
 package com.groomora.design.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
@@ -12,7 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -167,8 +170,11 @@ fun GroomoraSegmentedControl(
 ) {
     Surface(
         shape = CircleShape,
-        color = Color(0xFFE8E5DD),
-        modifier = modifier.defaultMinSize(minHeight = 48.dp)
+        color = Color(0xFFEFECE6),
+        border = BorderStroke(1.dp, Color(0xFFE2DDD5)),
+        modifier = modifier
+            .defaultMinSize(minHeight = 48.dp)
+            .padding(vertical = 4.dp)
     ) {
         Row(
             modifier = Modifier.padding(4.dp),
@@ -176,29 +182,31 @@ fun GroomoraSegmentedControl(
         ) {
             options.forEachIndexed { index, option ->
                 val isSelected = selectedIndex == index
-                Surface(
-                    shape = CircleShape,
-                    color = if (isSelected) Charcoal else Color.Transparent,
+                Box(
                     modifier = Modifier
-                        .defaultMinSize(minWidth = 48.dp, minHeight = 40.dp)
+                        .defaultMinSize(minWidth = 100.dp, minHeight = 40.dp)
+                        .clip(CircleShape)
+                        .background(if (isSelected) Charcoal else Color.Transparent)
                         .selectable(
                             selected = isSelected,
                             role = Role.Tab,
                             onClick = { onOptionSelected(index) }
                         )
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = option,
                         color = if (isSelected) Color.White else AppText,
                         style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
                     )
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun GroomoraFilterChip(
