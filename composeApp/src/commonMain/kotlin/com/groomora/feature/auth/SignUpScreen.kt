@@ -278,6 +278,10 @@ fun SignUpScreen(
                     GroomoraPrimaryButton(
                         text = "Create Account",
                         onClick = {
+                            if (!DependencyContainer.networkConnectivityManager.isConnected.value) {
+                                phoneError = "No internet connection. Please check your network to create an account."
+                                return@GroomoraPrimaryButton
+                            }
                             var hasError = false
 
                             if (fullName.isBlank()) {

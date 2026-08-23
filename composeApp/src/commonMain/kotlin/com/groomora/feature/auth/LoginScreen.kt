@@ -225,6 +225,10 @@ fun LoginScreen(
                             else -> "Get OTP"
                         },
                         onClick = {
+                            if (!DependencyContainer.networkConnectivityManager.isConnected.value) {
+                                phoneError = "No internet connection. Please check your network to sign in."
+                                return@GroomoraPrimaryButton
+                            }
                             if (!isOtpSent) {
                                 when {
                                     phoneNumber.isBlank() -> {

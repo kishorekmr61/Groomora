@@ -75,6 +75,7 @@ import androidx.compose.ui.Modifier
 import com.groomora.core.configuration.AppConfig
 import com.groomora.core.configuration.UpdateStatus
 import com.groomora.core.network.NetworkOfflineBanner
+import com.groomora.core.network.NoInternetScreen
 import com.groomora.feature.maintenance.MaintenanceScreen
 import com.groomora.feature.update.FlexibleUpdateBottomSheet
 import com.groomora.feature.update.ForceUpdateScreen
@@ -124,6 +125,17 @@ fun App() {
             NetworkOfflineBanner(isConnected = isNetworkConnected)
 
             when {
+                !isNetworkConnected -> {
+                    NoInternetScreen(
+                        onRetry = {
+                            scope.launch {
+                                DependencyContainer.configRepository.fetchConfig()
+                            }
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
                 appConfig.maintenance.isMaintenanceMode -> {
                     MaintenanceScreen(
                         maintenanceConfig = appConfig.maintenance,

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.groomora.design.*
 import com.groomora.design.components.*
 import com.groomora.feature.discovery.Professional
@@ -40,6 +42,48 @@ fun ShopDetailsScreen(
     var showCallDialog by remember { mutableStateOf(false) }
     var showDirectionDialog by remember { mutableStateOf(false) }
     var showShareDialog by remember { mutableStateOf(false) }
+    var selectedPhotoIndex by remember { mutableStateOf<Int?>(null) }
+
+    val salonGalleryPhotos = remember {
+        listOf(
+            GalleryPhoto(
+                title = "Styling Stations",
+                imageUrl = "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=800&q=80",
+                description = "Spacious ergonomic luxury styling chairs equipped with imported grooming stations.",
+                category = "Interiors"
+            ),
+            GalleryPhoto(
+                title = "Haircut Artistry",
+                imageUrl = "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&q=80",
+                description = "Precision skin fade, taper blend, and signature pompadour crafted by master stylists.",
+                category = "Hair Styling"
+            ),
+            GalleryPhoto(
+                title = "Spa & Facials",
+                imageUrl = "https://images.unsplash.com/photo-1512290900672-1f02e71d4793?w=800&q=80",
+                description = "Private relaxation rooms with botanical aromatherapy and gold facial therapy.",
+                category = "Spa Suite"
+            ),
+            GalleryPhoto(
+                title = "VIP Lounge",
+                imageUrl = "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800&q=80",
+                description = "Complimentary gourmet espresso bar, Wi-Fi, and plush leather waiting lounge.",
+                category = "VIP Amenities"
+            ),
+            GalleryPhoto(
+                title = "Beard Sculpting Studio",
+                imageUrl = "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&q=80",
+                description = "Hot towel treatment, ozone steam shave, and organic argan beard oil styling.",
+                category = "Beard Care"
+            ),
+            GalleryPhoto(
+                title = "Bridal & Glam Suite",
+                imageUrl = "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80",
+                description = "Dedicated airbrush makeup mirrors with professional CRI 98+ studio lighting.",
+                category = "Bridal Studio"
+            )
+        )
+    }
 
     LaunchedEffect(shopId) {
         com.groomora.app.DependencyContainer.analyticsManager.logScreenView("shop_details_screen")
@@ -430,16 +474,52 @@ fun ShopDetailsScreen(
                     "Gallery" -> {
                         item {
                             Column(modifier = Modifier.padding(16.dp)) {
-                                Text(text = "Salon & Work Gallery", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                                Spacer(Modifier.height(12.dp))
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    GalleryPhotoCard("Styling Stations", "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=600&q=80", Modifier.weight(1f))
-                                    GalleryPhotoCard("Haircut Artistry", "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=600&q=80", Modifier.weight(1f))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Salon & Work Gallery",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = HoneyAmber.copy(alpha = 0.12f),
+                                        border = BorderStroke(1.dp, HoneyAmber.copy(alpha = 0.3f))
+                                    ) {
+                                        Text(
+                                            text = "${salonGalleryPhotos.size} Photos",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = HoneyAmber,
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                        )
+                                    }
                                 }
-                                Spacer(Modifier.height(10.dp))
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                                    GalleryPhotoCard("Spa & Facials", "https://images.unsplash.com/photo-1512290900672-1f02e71d4793?w=600&q=80", Modifier.weight(1f))
-                                    GalleryPhotoCard("VIP Lounge", "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=600&q=80", Modifier.weight(1f))
+                                Spacer(Modifier.height(12.dp))
+                                salonGalleryPhotos.chunked(2).forEachIndexed { rowIndex, rowPhotos ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 10.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        rowPhotos.forEachIndexed { colIndex, photo ->
+                                            val photoIdx = rowIndex * 2 + colIndex
+                                            GalleryPhotoCard(
+                                                title = photo.title,
+                                                imageUrl = photo.imageUrl,
+                                                category = photo.category,
+                                                onClick = { selectedPhotoIndex = photoIdx },
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                        }
+                                        if (rowPhotos.size == 1) {
+                                            Spacer(Modifier.weight(1f))
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -488,14 +568,31 @@ fun ShopDetailsScreen(
                 }
             }
         }
+
+        // High-Res Fullscreen Photo Viewer Dialog
+        if (selectedPhotoIndex != null) {
+            GroomoraPhotoViewerDialog(
+                photos = salonGalleryPhotos,
+                initialIndex = selectedPhotoIndex!!,
+                onDismissRequest = { selectedPhotoIndex = null }
+            )
+        }
     }
 }
 
 @Composable
-fun GalleryPhotoCard(title: String, imageUrl: String, modifier: Modifier = Modifier) {
+fun GalleryPhotoCard(
+    title: String,
+    imageUrl: String,
+    category: String? = null,
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier
+) {
     GroomoraCard(
-        modifier = modifier.height(130.dp),
-        shape = MaterialTheme.shapes.medium,
+        modifier = modifier
+            .height(135.dp)
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(14.dp),
         containerColor = Charcoal
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -505,15 +602,46 @@ fun GalleryPhotoCard(title: String, imageUrl: String, modifier: Modifier = Modif
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Crop
             )
+
+            // Category tag on top-left
+            if (!category.isNullOrBlank()) {
+                Surface(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    color = Color.Black.copy(alpha = 0.6f)
+                ) {
+                    Text(
+                        text = category,
+                        color = Champagne,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            // Bottom smooth gradient with Title
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomCenter)
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(vertical = 4.dp),
-                contentAlignment = Alignment.Center
+                    .background(
+                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
+                        )
+                    )
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                contentAlignment = Alignment.BottomStart
             ) {
-                Text(title, color = Color.White, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+                Text(
+                    title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
+                )
             }
         }
     }

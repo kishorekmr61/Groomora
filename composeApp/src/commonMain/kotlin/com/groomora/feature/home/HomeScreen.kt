@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -56,6 +58,48 @@ fun HomeScreen(
 
     val state by viewModel.state.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
+    var selectedWorkPhotoIndex by remember { mutableStateOf<Int?>(null) }
+
+    val workGalleryPhotos = remember {
+        listOf(
+            GalleryPhoto(
+                title = "Classic Fade",
+                imageUrl = "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=800&q=80",
+                description = "Crisp mid skin fade with razor-sharp temple taper and natural texture top.",
+                category = "Men's Grooming"
+            ),
+            GalleryPhoto(
+                title = "Braided Updo",
+                imageUrl = "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=800&q=80",
+                description = "Intricate bohemian crown braid finished with pearl hair jewelry for weddings.",
+                category = "Bridal Styling"
+            ),
+            GalleryPhoto(
+                title = "Balayage Waves",
+                imageUrl = "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=800&q=80",
+                description = "Caramel sun-kissed hand-painted balayage with high-gloss keratin finish.",
+                category = "Hair Color"
+            ),
+            GalleryPhoto(
+                title = "Bridal Look",
+                imageUrl = "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80",
+                description = "Traditional royal bridal HD makeover with 24K gold eye pigments and contouring.",
+                category = "Bridal Makeup"
+            ),
+            GalleryPhoto(
+                title = "Smokey Eyes",
+                imageUrl = "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=800&q=80",
+                description = "Glamorous matte charcoal smokey eyes with dramatic feathered mink lashes.",
+                category = "Party Makeup"
+            ),
+            GalleryPhoto(
+                title = "Ozone Beard Spa",
+                imageUrl = "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=800&q=80",
+                description = "Deep conditioning warm eucalyptus steam treatment with beard shaping.",
+                category = "Beard Ritual"
+            )
+        )
+    }
 
     LaunchedEffect(Unit) {
         DependencyContainer.analyticsManager.logScreenView("home_screen")
@@ -576,30 +620,44 @@ fun HomeScreen(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            "OUR WORK GALLERY (Showcase Your Skills)",
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = AppText
-                        )
-                        val galleryPhotos = listOf(
-                            Pair("Classic Fade", "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=500&q=80"),
-                            Pair("Braided Updo", "https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?w=500&q=80"),
-                            Pair("Balayage Waves", "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=500&q=80"),
-                            Pair("Bridal Look", "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=500&q=80"),
-                            Pair("Smokey Eyes", "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?w=500&q=80")
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "OUR WORK GALLERY (Showcase Your Skills)",
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = AppText
+                            )
+                            Surface(
+                                shape = CircleShape,
+                                color = HoneyAmber.copy(alpha = 0.12f),
+                                border = BorderStroke(1.dp, HoneyAmber.copy(alpha = 0.3f))
+                            ) {
+                                Text(
+                                    text = "${workGalleryPhotos.size} Photos",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = HoneyAmber,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            items(galleryPhotos) { (title, photoUrl) ->
+                            itemsIndexed(workGalleryPhotos) { index, photo ->
                                 GroomoraCard(
-                                    modifier = Modifier.size(width = 120.dp, height = 120.dp),
-                                    shape = MaterialTheme.shapes.medium,
+                                    modifier = Modifier
+                                        .size(width = 130.dp, height = 130.dp)
+                                        .clickable { selectedWorkPhotoIndex = index },
+                                    shape = RoundedCornerShape(14.dp),
                                     containerColor = Charcoal
                                 ) {
                                     Box(Modifier.fillMaxSize()) {
                                         GroomoraImage(
-                                            url = photoUrl,
-                                            contentDescription = title,
+                                            url = photo.imageUrl,
+                                            contentDescription = photo.title,
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.Crop
                                         )
@@ -607,15 +665,21 @@ fun HomeScreen(
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .align(Alignment.BottomCenter)
-                                                .background(Color.Black.copy(alpha = 0.6f))
-                                                .padding(vertical = 4.dp),
-                                            contentAlignment = Alignment.Center
+                                                .background(
+                                                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
+                                                    )
+                                                )
+                                                .padding(horizontal = 6.dp, vertical = 4.dp),
+                                            contentAlignment = Alignment.BottomStart
                                         ) {
                                             Text(
-                                                title,
+                                                photo.title,
                                                 style = MaterialTheme.typography.labelSmall,
                                                 color = Color.White,
-                                                fontWeight = FontWeight.SemiBold
+                                                fontWeight = FontWeight.SemiBold,
+                                                maxLines = 1,
+                                                fontSize = 11.sp
                                             )
                                         }
                                     }
@@ -718,6 +782,15 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+
+        // Full-Screen High Res Photo Lightbox Dialog
+        if (selectedWorkPhotoIndex != null) {
+            GroomoraPhotoViewerDialog(
+                photos = workGalleryPhotos,
+                initialIndex = selectedWorkPhotoIndex!!,
+                onDismissRequest = { selectedWorkPhotoIndex = null }
+            )
         }
     }
 }

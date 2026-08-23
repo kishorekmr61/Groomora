@@ -1,5 +1,6 @@
 package com.groomora.feature.auth
 
+import com.groomora.app.DependencyContainer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,11 @@ class MockAuthRepository : AuthRepository {
 
 
     override suspend fun login(phoneNumber: String, otp: String): AuthState {
+        if (!DependencyContainer.networkConnectivityManager.isConnected.value) {
+            val errorState = AuthState.Error("No internet connection. Please check your network to sign in.")
+            _authState.value = errorState
+            return errorState
+        }
         _authState.value = AuthState.Loading
         delay(800)
         val user = User(
@@ -43,6 +49,11 @@ class MockAuthRepository : AuthRepository {
         password: String,
         referralCode: String?
     ): AuthState {
+        if (!DependencyContainer.networkConnectivityManager.isConnected.value) {
+            val errorState = AuthState.Error("No internet connection. Please check your network to create an account.")
+            _authState.value = errorState
+            return errorState
+        }
         _authState.value = AuthState.Loading
         delay(800)
         val user = User(
@@ -56,15 +67,18 @@ class MockAuthRepository : AuthRepository {
         return _authState.value
     }
 
-    override suspend fun logout() {
-        delay(200)
-        _authState.value = AuthState.Unauthenticated
-    }
-
     override suspend fun updateProfile(user: User): AuthState {
-        delay(500)
+        if (!DependencyContainer.networkConnectivityManager.isConnected.value) {
+            val errorState = AuthState.Error("No internet connection. Please check your network to update profile.")
+            _authState.value = errorState
+            return errorState
+        }
         _authState.value = AuthState.Authenticated(user)
         return _authState.value
     }
 
+    override suspend fun logout() {
+        delay(200)
+        _authState.value = AuthState.Unauthenticated
+    }
 }
