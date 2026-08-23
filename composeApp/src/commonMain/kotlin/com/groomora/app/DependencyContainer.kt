@@ -49,6 +49,10 @@ object DependencyContainer {
     val networkConnectivityManager: com.groomora.core.network.NetworkConnectivityManager by lazy { com.groomora.core.network.DefaultNetworkConnectivityManager() }
     val crashReporter: CrashReporter by lazy { DefaultCrashReporter() }
     val configRepository: ConfigRepository by lazy { MockConfigRepository() }
+    val adManager: com.groomora.core.ads.AdManager by lazy {
+        com.groomora.core.ads.GoogleAdManagerImpl(analyticsManager, crashReporter)
+    }
+
 
     // ==========================================
     // CENTRALIZED API SERVICES LAYER

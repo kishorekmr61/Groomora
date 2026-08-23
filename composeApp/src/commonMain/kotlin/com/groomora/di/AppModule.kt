@@ -11,6 +11,8 @@ import com.groomora.core.location.LocationRepository
 import com.groomora.core.location.MockLocationRepository
 import com.groomora.core.network.DefaultNetworkConnectivityManager
 import com.groomora.core.network.NetworkConnectivityManager
+import com.groomora.core.ads.AdManager
+import com.groomora.core.ads.GoogleAdManagerImpl
 import org.koin.dsl.module
 
 val appModule = module {
@@ -20,4 +22,6 @@ val appModule = module {
     single<ConfigRepository> { MockConfigRepository() }
     single<LocationRepository> { MockLocationRepository() }
     single { GeoRulesEngine() }
+    single<AdManager> { GoogleAdManagerImpl(analyticsManager = get(), crashReporter = get()) }
 }
+

@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.dp
 import com.groomora.design.Champagne
 import com.groomora.design.Charcoal
 import com.groomora.design.WarmIvory
+import com.groomora.design.ads.GroomoraRewardedAdCard
+import com.groomora.app.DependencyContainer
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,9 +68,25 @@ fun LoyaltyScreen(
                     item {
                         ReferralCard(profile.referralCode)
                     }
+
+                    // Google Ad Manager Rewarded Video Ad
+                    item {
+                        GroomoraRewardedAdCard(
+                            rewardPoints = 50,
+                            onWatchAd = {
+                                DependencyContainer.adManager.showRewarded(
+                                    onRewarded = { amount, _ ->
+                                        viewModel.redeemPoints(-amount) // Add reward points
+                                    }
+                                )
+
+                            }
+                        )
+                    }
                 }
 
                 item {
+
                     Text("Membership Plans", style = MaterialTheme.typography.titleLarge)
                 }
                 items(state.membershipPlans) { plan ->

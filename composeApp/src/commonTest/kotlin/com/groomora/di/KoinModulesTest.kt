@@ -53,7 +53,11 @@ class KoinModulesTest : KoinTest {
 
         val locationRepo: LocationRepository = get()
         assertNotNull(locationRepo)
+
+        val adManager: com.groomora.core.ads.AdManager = get()
+        assertNotNull(adManager)
     }
+
 
     @Test
     fun testApiServicesResolution() {

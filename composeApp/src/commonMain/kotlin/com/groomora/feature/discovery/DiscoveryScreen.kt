@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.groomora.app.DependencyContainer
 import com.groomora.design.*
 import com.groomora.design.components.*
+import com.groomora.design.ads.GroomoraNativeAdCard
+
 
 
 @Composable
@@ -205,13 +207,30 @@ fun DiscoveryScreen(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(state.shops) { shop ->
-                        ShopCard(
-                            shop = shop,
-                            onViewShop = { onNavigateToShop(shop.id) }
-                        )
+                    state.shops.forEachIndexed { index, shop ->
+                        item(key = shop.id) {
+                            ShopCard(
+                                shop = shop,
+                                onViewShop = { onNavigateToShop(shop.id) }
+                            )
+                        }
+
+                        // Google Ad Manager Native Ad Card after second item
+                        if (index == 1) {
+                            item(key = "native_ad_sponsored") {
+                                GroomoraNativeAdCard(
+                                    advertiser = "L'Oréal Professionnel",
+                                    title = "Discover Salon-Grade Hair Nourishment",
+                                    description = "Get up to 25% off styling serum when booked with your next haircut.",
+                                    onCtaClick = {
+                                        DependencyContainer.adManager.logAdClick("native", "discovery_feed_card")
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
+
             }
         }
     }

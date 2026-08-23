@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.sp
 import com.groomora.app.DependencyContainer
 import com.groomora.design.*
 import com.groomora.design.components.*
+import com.groomora.design.ads.GroomoraAdBanner
+
 
 import com.groomora.feature.discovery.Shop
 
@@ -297,7 +299,18 @@ fun HomeScreen(
                     }
                 }
 
+                // 4.5 Google Ad Manager Sponsored Banner
+                item {
+                    GroomoraAdBanner(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        onAdClick = {
+                            DependencyContainer.adManager.logAdClick("banner", "home_screen_top_banner")
+                        }
+                    )
+                }
+
                 // 5. Top Rated Near You (Reusable ShopCard Component)
+
                 item {
                     Column(
                         modifier = Modifier.padding(horizontal = 16.dp),
