@@ -13,6 +13,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -45,7 +50,13 @@ fun GroomoraOutlinedTextField(
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    if (isError && errorMessage != null) {
+                        error(errorMessage)
+                    }
+                },
             label = label?.let { { Text(it) } },
             placeholder = placeholder?.let { { Text(it, color = MutedText) } },
             prefix = prefix,
@@ -132,7 +143,13 @@ fun GroomoraOtpField(
                 val digits = input.filter { it.isDigit() }
                 if (digits.length <= length) onValueChange(digits)
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics {
+                    if (isError && errorMessage != null) {
+                        error(errorMessage)
+                    }
+                },
             label = { Text(label) },
             placeholder = { Text(placeholder, color = MutedText, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
             isError = isError,
@@ -190,7 +207,15 @@ fun GroomoraPasswordField(
         enabled = enabled,
         visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
-            TextButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+            TextButton(
+                onClick = { isPasswordVisible = !isPasswordVisible },
+                modifier = Modifier
+                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                    .semantics {
+                        role = Role.Button
+                        contentDescription = if (isPasswordVisible) "Hide password" else "Show password"
+                    }
+            ) {
                 Text(
                     text = if (isPasswordVisible) "Hide" else "Show",
                     color = HoneyAmber,
@@ -221,7 +246,11 @@ fun GroomoraSearchBar(
         modifier = if (onClick != null) {
             modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(
+                    role = Role.Button,
+                    onClickLabel = placeholder,
+                    onClick = onClick
+                )
         } else {
             modifier.fillMaxWidth()
         },
@@ -242,10 +271,13 @@ fun GroomoraSearchBar(
         },
         trailingIcon = {
             if (showClearButton && query.isNotEmpty()) {
-                IconButton(onClick = { onQueryChange("") }) {
+                IconButton(
+                    onClick = { onQueryChange("") },
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Clear",
+                        contentDescription = "Clear search text",
                         tint = MutedText
                     )
                 }

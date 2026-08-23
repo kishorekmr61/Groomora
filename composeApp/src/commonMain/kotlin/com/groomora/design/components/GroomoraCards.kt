@@ -19,6 +19,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -39,7 +41,11 @@ fun GroomoraCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier = if (onClick != null) modifier.clickable(onClick = onClick) else modifier,
+        modifier = if (onClick != null) {
+            modifier.clickable(role = Role.Button, onClick = onClick)
+        } else {
+            modifier
+        },
         shape = shape,
         colors = CardDefaults.cardColors(containerColor = containerColor),
         border = borderColor?.let { BorderStroke(1.dp, it) },
@@ -97,7 +103,7 @@ fun ShopCard(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.Star,
-                        contentDescription = null,
+                        contentDescription = "Rating",
                         tint = HoneyAmber,
                         modifier = Modifier.size(14.dp)
                     )
@@ -117,10 +123,13 @@ fun ShopCard(
             }
 
             if (onFavoriteToggle != null) {
-                IconButton(onClick = onFavoriteToggle) {
+                IconButton(
+                    onClick = onFavoriteToggle,
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                ) {
                     Icon(
                         imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Favorite",
+                        contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
                         tint = if (isFavorite) ErrorRed else MutedText
                     )
                 }
@@ -128,6 +137,7 @@ fun ShopCard(
                 Button(
                     onClick = onViewShop,
                     shape = CircleShape,
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = HoneyAmber,
                         contentColor = Color.White
@@ -157,7 +167,7 @@ fun ServiceItemCard(
     GroomoraCard(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onSelect),
+            .clickable(role = Role.Button, onClick = onSelect),
         shape = MaterialTheme.shapes.medium,
         borderColor = if (isSelected) HoneyAmber else BorderGray
     ) {
@@ -215,6 +225,7 @@ fun ServiceItemCard(
                 RadioButton(
                     selected = isSelected,
                     onClick = onSelect,
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
                     colors = RadioButtonDefaults.colors(selectedColor = HoneyAmber)
                 )
             } else {
@@ -228,7 +239,7 @@ fun ServiceItemCard(
                     Spacer(Modifier.width(6.dp))
                     Icon(
                         Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
+                        contentDescription = "Details",
                         tint = Color.LightGray,
                         modifier = Modifier.size(18.dp)
                     )
@@ -249,7 +260,7 @@ fun StylistCard(
     GroomoraCard(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onSelect),
+            .clickable(role = Role.Button, onClick = onSelect),
         shape = MaterialTheme.shapes.large,
         borderColor = if (isSelected) DeepIndigo else BorderGray
     ) {
@@ -303,7 +314,7 @@ fun StylistCard(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Default.Star,
-                            contentDescription = null,
+                            contentDescription = "Rating",
                             tint = HoneyAmber,
                             modifier = Modifier.size(14.dp)
                         )
@@ -330,12 +341,14 @@ fun StylistCard(
                 RadioButton(
                     selected = isSelected,
                     onClick = onSelect,
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
                     colors = RadioButtonDefaults.colors(selectedColor = DeepIndigo)
                 )
             } else {
                 Button(
                     onClick = onSelect,
                     shape = CircleShape,
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = HoneyAmber,
                         contentColor = Color.White
@@ -387,7 +400,7 @@ fun ReviewCard(
                 repeat(rating.toInt().coerceIn(1, 5)) {
                     Icon(
                         Icons.Default.Star,
-                        contentDescription = null,
+                        contentDescription = "Star rating",
                         tint = HoneyAmber,
                         modifier = Modifier.size(14.dp)
                     )

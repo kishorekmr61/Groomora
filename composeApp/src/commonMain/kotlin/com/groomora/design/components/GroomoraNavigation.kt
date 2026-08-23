@@ -3,6 +3,7 @@ package com.groomora.design.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -13,6 +14,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.groomora.design.*
@@ -48,10 +52,13 @@ fun GroomoraTopAppBar(
         },
         navigationIcon = {
             if (onBack != null) {
-                IconButton(onClick = onBack) {
+                IconButton(
+                    onClick = onBack,
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
+                        contentDescription = "Navigate back",
                         tint = contentColor
                     )
                 }
@@ -161,10 +168,10 @@ fun GroomoraSegmentedControl(
     Surface(
         shape = CircleShape,
         color = Color(0xFFE8E5DD),
-        modifier = modifier.height(38.dp)
+        modifier = modifier.defaultMinSize(minHeight = 48.dp)
     ) {
         Row(
-            modifier = Modifier.padding(3.dp),
+            modifier = Modifier.padding(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             options.forEachIndexed { index, option ->
@@ -173,8 +180,13 @@ fun GroomoraSegmentedControl(
                     shape = CircleShape,
                     color = if (isSelected) Charcoal else Color.Transparent,
                     modifier = Modifier
-                        .clickable { onOptionSelected(index) }
-                        .padding(horizontal = 18.dp, vertical = 4.dp)
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 40.dp)
+                        .selectable(
+                            selected = isSelected,
+                            role = Role.Tab,
+                            onClick = { onOptionSelected(index) }
+                        )
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
                 ) {
                     Text(
                         text = option,
@@ -200,10 +212,16 @@ fun GroomoraFilterChip(
         shape = CircleShape,
         color = if (isSelected) HoneyAmber else Color.White,
         border = if (isSelected) null else BorderStroke(1.dp, BorderGray),
-        modifier = modifier.clickable(onClick = onClick)
+        modifier = modifier
+            .defaultMinSize(minHeight = 48.dp)
+            .selectable(
+                selected = isSelected,
+                role = Role.Checkbox,
+                onClick = onClick
+            )
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (icon != null) {

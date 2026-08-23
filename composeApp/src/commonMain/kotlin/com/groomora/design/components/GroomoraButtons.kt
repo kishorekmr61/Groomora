@@ -13,6 +13,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -32,7 +36,9 @@ fun GroomoraPrimaryButton(
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier.height(height),
+        modifier = modifier
+            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+            .height(height),
         enabled = enabled && !isLoading,
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(
@@ -46,7 +52,9 @@ fun GroomoraPrimaryButton(
         if (isLoading) {
             CircularProgressIndicator(
                 color = contentColor,
-                modifier = Modifier.size(22.dp),
+                modifier = Modifier
+                    .size(22.dp)
+                    .semantics { contentDescription = "Loading, please wait" },
                 strokeWidth = 2.dp
             )
         } else {
@@ -57,7 +65,7 @@ fun GroomoraPrimaryButton(
                 if (icon != null) {
                     Icon(
                         imageVector = icon,
-                        contentDescription = null,
+                        contentDescription = null, // decorative when text is present
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(Modifier.width(8.dp))
@@ -79,7 +87,7 @@ fun GroomoraSecondaryButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     icon: ImageVector? = null,
-    height: Dp = 44.dp
+    height: Dp = 48.dp
 ) {
     GroomoraPrimaryButton(
         text = text,
@@ -102,11 +110,13 @@ fun GroomoraOutlinedButton(
     icon: ImageVector? = null,
     borderColor: Color = BorderGray,
     contentColor: Color = AppText,
-    height: Dp = 44.dp
+    height: Dp = 48.dp
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.height(height),
+        modifier = modifier
+            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+            .height(height),
         enabled = enabled,
         shape = CircleShape,
         border = BorderStroke(1.dp, borderColor),
@@ -119,7 +129,7 @@ fun GroomoraOutlinedButton(
             if (icon != null) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = null,
+                    contentDescription = null, // decorative
                     modifier = Modifier.size(16.dp),
                     tint = contentColor
                 )
@@ -148,7 +158,13 @@ fun GroomoraCircularActionButton(
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.clickable(onClick = onClick)
+        modifier = modifier
+            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+            .clickable(
+                role = Role.Button,
+                onClickLabel = label,
+                onClick = onClick
+            )
     ) {
         Box(
             modifier = Modifier
