@@ -18,6 +18,14 @@ class AuthViewModel(
         viewModelScope.launch {
             when (intent) {
                 is AuthIntent.Login -> authRepository.login(intent.phoneNumber, intent.otp)
+                is AuthIntent.SignUp -> authRepository.signUp(
+                    name = intent.name,
+                    phoneNumber = intent.phoneNumber,
+                    email = intent.email,
+                    gender = intent.gender,
+                    password = intent.password,
+                    referralCode = intent.referralCode
+                )
                 AuthIntent.Logout -> authRepository.logout()
                 is AuthIntent.UpdateProfile -> authRepository.updateProfile(intent.user)
             }

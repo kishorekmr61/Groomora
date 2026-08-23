@@ -30,4 +30,6 @@ sealed interface ProductIntent {
     data object LoadProducts : ProductIntent
     data class AddToCart(val productId: String) : ProductIntent
     data class RemoveFromCart(val productId: String) : ProductIntent
+    data object ClearCart : ProductIntent
 }
+

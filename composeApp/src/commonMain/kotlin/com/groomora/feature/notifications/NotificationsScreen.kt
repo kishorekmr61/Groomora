@@ -5,21 +5,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.groomora.design.Champagne
-import com.groomora.design.Charcoal
-import com.groomora.design.WarmIvory
+import com.groomora.app.DependencyContainer
+import com.groomora.design.*
+import com.groomora.design.components.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationsScreen(
     viewModel: NotificationsViewModel,
@@ -27,42 +27,34 @@ fun NotificationsScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    LaunchedEffect(Unit) {
+        DependencyContainer.analyticsManager.logScreenView("notifications_screen")
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Notifications") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
+            GroomoraTopAppBar(
+                title = "Notifications",
+                onBack = onBack,
                 actions = {
                     if (state.unreadCount > 0) {
                         TextButton(onClick = { viewModel.onIntent(NotificationsIntent.MarkAllAsRead) }) {
-                            Text("Mark all read", color = Champagne)
+                            Text("Mark all read", color = HoneyAmber, fontWeight = FontWeight.Bold)
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Charcoal,
-                    titleContentColor = Champagne,
-                    navigationIconContentColor = Champagne
-                )
+                }
             )
         }
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Charcoal)
-            }
+            GroomoraLoadingState()
         } else if (state.notifications.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Notifications, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
-                    Spacer(Modifier.height(16.dp))
-                    Text("No notifications yet", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
-                }
-            }
+            GroomoraEmptyState(
+                title = "No Notifications",
+                message = "You're all caught up! Updates regarding appointments and offers will appear here.",
+                icon = Icons.Default.Notifications,
+                modifier = Modifier.padding(padding)
+            )
         } else {
             LazyColumn(
                 modifier = Modifier
@@ -75,7 +67,7 @@ fun NotificationsScreen(
                         notification = notification,
                         onClick = { viewModel.onIntent(NotificationsIntent.MarkAsRead(notification.id)) }
                     )
-                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.3f))
+                    HorizontalDivider(color = BorderGray)
                 }
             }
         }
@@ -89,7 +81,7 @@ fun NotificationItem(
 ) {
     Surface(
         onClick = onClick,
-        color = if (notification.isRead) Color.Transparent else Champagne.copy(alpha = 0.05f)
+        color = if (notification.isRead) Color.Transparent else HoneyAmber.copy(alpha = 0.06f)
     ) {
         Row(
             modifier = Modifier
@@ -102,7 +94,7 @@ fun NotificationItem(
                     .size(8.dp)
                     .padding(top = 6.dp)
                     .background(
-                        color = if (notification.isRead) Color.Transparent else Charcoal,
+                        color = if (notification.isRead) Color.Transparent else HoneyAmber,
                         shape = MaterialTheme.shapes.extraSmall
                     )
             )
@@ -111,19 +103,20 @@ fun NotificationItem(
                 Text(
                     text = notification.title,
                     style = MaterialTheme.typography.titleSmall,
-                    color = Charcoal
+                    fontWeight = if (notification.isRead) FontWeight.Normal else FontWeight.Bold,
+                    color = AppText
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = notification.body,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.DarkGray
+                    color = AppText
                 )
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text = notification.timestamp,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray
+                    color = MutedText
                 )
             }
         }

@@ -35,8 +35,12 @@ class ProductViewModel(
                 }
                 _state.update { it.copy(cartItems = currentCart) }
             }
+            ProductIntent.ClearCart -> {
+                _state.update { it.copy(cartItems = emptyMap()) }
+            }
         }
     }
+
 
     private fun loadProducts() {
         viewModelScope.launch {

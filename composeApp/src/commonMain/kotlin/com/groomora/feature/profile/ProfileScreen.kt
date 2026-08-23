@@ -6,12 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,8 +26,10 @@ fun ProfileScreen(
     viewModel: ProfileViewModel,
     onNavigateToSettings: () -> Unit,
     onNavigateToOrders: () -> Unit,
+    onNavigateToBookingHistory: () -> Unit,
     onNavigateToAddresses: () -> Unit,
     onNavigateToFavorites: () -> Unit,
+    onNavigateToSupport: () -> Unit,
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -73,35 +70,36 @@ fun ProfileScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 item {
-                    ProfileHeader(state.user?.name ?: "Guest", state.user?.phoneNumber ?: "")
+                    ProfileHeader(state.user?.name ?: "Alex Morgan", state.user?.phoneNumber ?: "+91 98765 43210")
                 }
 
                 item {
-                    Text("My Account", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                    Text("My Activity", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
                 }
 
                 item {
-                    ProfileMenuItem("Booking & Order History", Icons.Default.Info, onClick = onNavigateToOrders)
+                    ProfileMenuItem("My Bookings (Reschedule & Cancel)", Icons.Default.DateRange, onClick = onNavigateToBookingHistory)
                 }
                 item {
-                    ProfileMenuItem("My Favorites", Icons.Default.Favorite, onClick = onNavigateToFavorites)
+                    ProfileMenuItem("Product Orders & Delivery", Icons.Default.ShoppingCart, onClick = onNavigateToOrders)
+                }
+                item {
+                    ProfileMenuItem("My Favorites & Saved Salons", Icons.Default.Favorite, onClick = onNavigateToFavorites)
                 }
                 item {
                     ProfileMenuItem("Saved Addresses", Icons.Default.LocationOn, onClick = onNavigateToAddresses)
                 }
-                item {
-                    ProfileMenuItem("Payment Methods", Icons.Default.Info) { /* TODO */ }
-                }
 
                 item {
-                    Text("Support", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
+                    Text("Support & Settings", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
                 }
                 item {
-                    ProfileMenuItem("Help Center", Icons.Default.Info) { /* TODO */ }
+                    ProfileMenuItem("Help & Support Center", Icons.Default.Info, onClick = onNavigateToSupport)
                 }
                 item {
-                    ProfileMenuItem("About Groomora", Icons.Default.Info) { /* TODO */ }
+                    ProfileMenuItem("App Settings & Preferences", Icons.Default.Settings, onClick = onNavigateToSettings)
                 }
+
 
                 item {
                     Spacer(Modifier.height(24.dp))

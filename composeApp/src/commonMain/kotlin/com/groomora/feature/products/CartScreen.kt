@@ -1,5 +1,6 @@
 package com.groomora.feature.products
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,32 +8,45 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.groomora.app.DependencyContainer
 import com.groomora.design.Champagne
 import com.groomora.design.Charcoal
+import com.groomora.design.WarmGold
 import com.groomora.design.WarmIvory
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CartScreen(
     viewModel: ProductViewModel,
+    onNavigateToOrders: () -> Unit,
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
     val cartProducts = state.products.filter { state.cartItems.containsKey(it.id) }
-    val totalAmount = cartProducts.sumOf { it.price * (state.cartItems[it.id] ?: 0) }
+    val subtotal = cartProducts.sumOf { it.price * (state.cartItems[it.id] ?: 0) }
+    val deliveryFee = if (subtotal > 999.0 || subtotal == 0.0) 0.0 else 49.0
+    val totalAmount = subtotal + deliveryFee
+
+    var showCheckoutDialog by remember { mutableStateOf(false) }
+    var selectedPaymentMethod by remember { mutableStateOf("UPI (Google Pay / PhonePe)") }
+    var deliveryAddress by remember { mutableStateOf("221B Baker Street, Flat 4A, Bangalore - 560001") }
+    var isPlacingOrder by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("My Cart") },
+                title = { Text("My Cart (${cartProducts.sumOf { state.cartItems[it.id] ?: 0 }})") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -47,7 +61,7 @@ fun CartScreen(
         },
         bottomBar = {
             if (cartProducts.isNotEmpty()) {
-                Surface(shadowElevation = 8.dp) {
+                Surface(shadowElevation = 8.dp, color = Color.White) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -56,14 +70,15 @@ fun CartScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column {
-                            Text("Total Amount", style = MaterialTheme.typography.labelLarge)
-                            Text("₹$totalAmount", style = MaterialTheme.typography.headlineSmall, color = Charcoal)
+                            Text("Total Amount", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                            Text("₹${totalAmount.toInt()}", style = MaterialTheme.typography.headlineSmall, color = Charcoal, fontWeight = FontWeight.Bold)
                         }
                         Button(
-                            onClick = { /* TODO: Checkout */ },
-                            colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne)
+                            onClick = { showCheckoutDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne),
+                            shape = MaterialTheme.shapes.medium
                         ) {
-                            Text("Checkout")
+                            Text("Proceed to Checkout", modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
                         }
                     }
                 }
@@ -71,8 +86,20 @@ fun CartScreen(
         }
     ) { padding ->
         if (cartProducts.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Your cart is empty", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(WarmIvory)
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Icon(Icons.Default.ShoppingCart, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
+                    Text("Your cart is currently empty", style = MaterialTheme.typography.titleMedium, color = Color.Gray)
+                    OutlinedButton(onClick = onBack) {
+                        Text("Browse Grooming Products", color = Charcoal)
+                    }
+                }
             }
         } else {
             LazyColumn(
@@ -83,6 +110,22 @@ fun CartScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Free delivery incentive banner
+                item {
+                    Surface(
+                        color = if (deliveryFee == 0.0) Color(0xFF2E7D5B).copy(alpha = 0.12f) else WarmGold.copy(alpha = 0.15f),
+                        shape = MaterialTheme.shapes.small
+                    ) {
+                        Text(
+                            text = if (deliveryFee == 0.0) "🎉 You have unlocked Free Standard Delivery!" else "Add ₹${(999 - subtotal).toInt()} more to get Free Delivery",
+                            modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Medium,
+                            color = if (deliveryFee == 0.0) Color(0xFF2E7D5B) else Charcoal
+                        )
+                    }
+                }
+
                 items(cartProducts) { product ->
                     val quantity = state.cartItems[product.id] ?: 0
                     CartItem(
@@ -92,8 +135,123 @@ fun CartScreen(
                         onRemove = { viewModel.onIntent(ProductIntent.RemoveFromCart(product.id)) }
                     )
                 }
+
+                // Price Summary Breakdown
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Order Summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Items Subtotal", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                                Text("₹${subtotal.toInt()}", style = MaterialTheme.typography.bodyMedium)
+                            }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Delivery Fee", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                                Text(if (deliveryFee == 0.0) "FREE" else "₹${deliveryFee.toInt()}", style = MaterialTheme.typography.bodyMedium, color = if (deliveryFee == 0.0) Color(0xFF2E7D5B) else Charcoal)
+                            }
+                            HorizontalDivider(color = Color.LightGray.copy(alpha = 0.4f))
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Grand Total", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                Text("₹${totalAmount.toInt()}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Charcoal)
+                            }
+                        }
+                    }
+                }
             }
         }
+    }
+
+    // Checkout Confirmation Dialog
+    if (showCheckoutDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isPlacingOrder) showCheckoutDialog = false },
+            title = { Text("Complete Order", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                    Text("Delivery Address:", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                    Surface(
+                        color = WarmIvory,
+                        shape = MaterialTheme.shapes.small,
+                        border = BorderStroke(1.dp, Color.LightGray)
+                    ) {
+                        Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.LocationOn, contentDescription = null, tint = Charcoal, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(deliveryAddress, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+
+                    Text("Payment Method:", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf("UPI (Google Pay / PhonePe)", "Credit / Debit Card", "Cash on Delivery").forEach { method ->
+                            Surface(
+                                onClick = { selectedPaymentMethod = method },
+                                shape = MaterialTheme.shapes.small,
+                                color = if (selectedPaymentMethod == method) Charcoal.copy(alpha = 0.08f) else Color.White,
+                                border = BorderStroke(1.dp, if (selectedPaymentMethod == method) Charcoal else Color.LightGray)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp).fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = selectedPaymentMethod == method,
+                                        onClick = { selectedPaymentMethod = method },
+                                        colors = RadioButtonDefaults.colors(selectedColor = Charcoal)
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(method, style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                        }
+                    }
+
+                    Text("Amount to Pay: ₹${totalAmount.toInt()}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Charcoal)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        isPlacingOrder = true
+                        coroutineScope.launch {
+                            val items = cartProducts.map { p ->
+                                OrderItem(productId = p.id, productName = p.name, quantity = state.cartItems[p.id] ?: 1, price = p.price)
+                            }
+                            DependencyContainer.orderRepository.placeOrder(
+                                items = items,
+                                totalAmount = totalAmount,
+                                address = deliveryAddress,
+                                paymentMethod = selectedPaymentMethod
+                            )
+                            viewModel.onIntent(ProductIntent.ClearCart)
+                            isPlacingOrder = false
+                            showCheckoutDialog = false
+                            onNavigateToOrders()
+                        }
+                    },
+                    enabled = !isPlacingOrder,
+                    colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne)
+                ) {
+                    if (isPlacingOrder) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Champagne)
+                    } else {
+                        Text("Place Order")
+                    }
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showCheckoutDialog = false },
+                    enabled = !isPlacingOrder
+                ) {
+                    Text("Back to Cart")
+                }
+            }
+        )
     }
 }
 
@@ -106,33 +264,37 @@ fun CartItem(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color.White)
+        shape = MaterialTheme.shapes.medium,
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(14.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(60.dp)
-                    .background(Color.LightGray, MaterialTheme.shapes.small)
-            )
-            Spacer(Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(product.name, style = MaterialTheme.typography.titleMedium)
-                Text("₹${product.price}", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                    .size(56.dp)
+                    .background(WarmIvory, MaterialTheme.shapes.small),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(product.name.take(2).uppercase(), color = Charcoal, fontWeight = FontWeight.Bold)
             }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onRemove) {
-                    Icon(
-                        if (quantity > 1) Icons.Default.Delete else Icons.Default.Delete, // Should be minus icon but delete works for now
-                        contentDescription = null,
-                        tint = Charcoal
-                    )
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(product.name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text("₹${product.price.toInt()} each", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(onClick = onRemove, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Delete, contentDescription = "Decrease", tint = Color.Gray, modifier = Modifier.size(18.dp))
                 }
-                Text("$quantity", style = MaterialTheme.typography.titleMedium)
-                IconButton(onClick = onAdd) {
-                    Text("+", style = MaterialTheme.typography.headlineSmall) // Temporary plus
+                Text("$quantity", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                IconButton(onClick = onAdd, modifier = Modifier.size(32.dp)) {
+                    Text("+", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Charcoal)
                 }
             }
         }

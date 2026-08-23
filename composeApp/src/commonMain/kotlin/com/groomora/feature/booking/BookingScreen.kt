@@ -1,205 +1,144 @@
 package com.groomora.feature.booking
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.groomora.design.Champagne
-import com.groomora.design.Charcoal
-import com.groomora.design.WarmIvory
+import androidx.compose.ui.unit.sp
+import com.groomora.design.*
+import com.groomora.design.components.*
+import com.groomora.feature.discovery.Professional
+import com.groomora.feature.shop.Service
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BookingScreen(
-    serviceId: String,
+    serviceId: String?,
+    packageId: String?,
     viewModel: BookingViewModel,
     onNavigateToAddresses: () -> Unit,
+    onNavigateToHistory: () -> Unit,
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    var currentStep by remember { mutableIntStateOf(1) }
 
-    LaunchedEffect(serviceId) {
-        viewModel.onIntent(BookingIntent.Initialize(serviceId))
+    LaunchedEffect(serviceId, packageId) {
+        com.groomora.app.DependencyContainer.analyticsManager.logScreenView("booking_screen")
+        viewModel.onIntent(BookingIntent.Initialize(serviceId = serviceId, packageId = packageId))
     }
+
+    LaunchedEffect(currentStep) {
+        val stepName = when (currentStep) {
+            1 -> "select_service"
+            2 -> "select_professional"
+            3 -> "select_date_time"
+            else -> "confirm_booking"
+        }
+        com.groomora.app.DependencyContainer.analyticsManager.logFunnelStep("booking_funnel", currentStep, stepName)
+    }
+
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Book Service") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
+            GroomoraTopAppBar(
+                title = when (currentStep) {
+                    1 -> "1. Select Service"
+                    2 -> "2. Select Professional"
+                    3 -> "3. Select Date & Time"
+                    else -> "4. Confirm Booking"
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Charcoal,
-                    titleContentColor = Champagne,
-                    navigationIconContentColor = Champagne
-                )
+                onBack = {
+                    if (currentStep > 1) {
+                        currentStep -= 1
+                    } else {
+                        onBack()
+                    }
+                }
             )
         },
         bottomBar = {
             if (!state.isBookingConfirmed) {
-                Surface(shadowElevation = 8.dp) {
-                    Button(
-                        onClick = { viewModel.onIntent(BookingIntent.ConfirmBooking) },
-                        modifier = Modifier.fillMaxWidth().padding(16.dp).height(56.dp),
-                        enabled = state.selectedDate != null && state.selectedTime != null && !state.isLoading,
-                        colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne)
-                    ) {
-                        if (state.isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Champagne)
-                        else Text("Confirm Booking • ₹${state.priceBreakdown.total}")
+                Surface(
+                    color = Color.White,
+                    shadowElevation = 8.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(modifier = Modifier.padding(16.dp)) {
+                        GroomoraPrimaryButton(
+                            text = if (currentStep == 4) "Confirm Booking" else "Continue",
+                            onClick = {
+                                if (currentStep < 4) {
+                                    currentStep += 1
+                                } else {
+                                    viewModel.onIntent(BookingIntent.ConfirmBooking)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            isLoading = state.isLoading
+                        )
                     }
                 }
             }
         }
     ) { padding ->
         if (state.isBookingConfirmed) {
-            BookingSuccessView(onBack)
+            BookingConfirmationSuccessView(
+                confirmationId = state.lastConfirmedBookingId ?: "BK-${(1000..9999).random()}",
+                onViewHistory = onNavigateToHistory
+            )
         } else {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(WarmIvory)
-                    .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .padding(padding)
             ) {
-                // Service Summary
-                item {
-                    state.selectedService?.let { service ->
-                        Text(service.name, style = MaterialTheme.typography.headlineSmall)
-                    }
-                }
+                BookingStepProgressRow(currentStep = currentStep)
 
-                // Home Service Toggle
-                item {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text("Home Service", style = MaterialTheme.typography.titleMedium)
-                                Text("Available for this service", style = MaterialTheme.typography.bodySmall)
-                            }
-                            Switch(
-                                checked = state.isHomeService,
-                                onCheckedChange = { viewModel.onIntent(BookingIntent.ToggleHomeService(it)) },
-                                colors = SwitchDefaults.colors(checkedThumbColor = Champagne, checkedTrackColor = Charcoal)
-                            )
+                when (currentStep) {
+                    1 -> Step1SelectServiceView(
+                        state = state,
+                        onSelectService = { service ->
+                            viewModel.onIntent(BookingIntent.Initialize(serviceId = service.id))
+                            currentStep = 2
                         }
-                        
-                        if (state.isHomeService) {
-                            Spacer(Modifier.height(12.dp))
-                            Surface(
-                                onClick = onNavigateToAddresses,
-                                shape = MaterialTheme.shapes.medium,
-                                color = Color.White,
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(Icons.Default.LocationOn, contentDescription = null, tint = Charcoal)
-                                    Spacer(Modifier.width(12.dp))
-                                    Text(
-                                        text = "Select Delivery Address",
-                                        modifier = Modifier.weight(1f),
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                    Text("Change", color = Color.Blue, style = MaterialTheme.typography.labelSmall)
-                                }
-                            }
+                    )
+                    2 -> Step2SelectProfessionalView(
+                        state = state,
+                        onSelectProfessional = { pro ->
+                            viewModel.onIntent(BookingIntent.SelectProfessional(pro))
+                            currentStep = 3
                         }
-                    }
-                }
-
-                // Add-ons
-                if (state.availableAddOns.isNotEmpty()) {
-                    item {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Enhance your experience", style = MaterialTheme.typography.titleMedium)
-                            state.availableAddOns.forEach { addOn ->
-                                AddOnItem(
-                                    addOn = addOn,
-                                    isSelected = state.selectedAddOns.contains(addOn.id),
-                                    onToggle = { viewModel.onIntent(BookingIntent.ToggleAddOn(addOn.id)) }
-                                )
-                            }
+                    )
+                    3 -> Step3SelectDateTimeView(
+                        state = state,
+                        onSelectDate = { date -> viewModel.onIntent(BookingIntent.SelectDate(date)) },
+                        onSelectSlot = { slot ->
+                            viewModel.onIntent(BookingIntent.SelectTime(slot))
+                            currentStep = 4
                         }
-                    }
-                }
-
-                // Date Selection
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Select Date", style = MaterialTheme.typography.titleMedium)
-                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            items(state.availability) { availability ->
-                                DateChip(
-                                    date = availability.date,
-                                    isSelected = state.selectedDate == availability.date,
-                                    onClick = { viewModel.onIntent(BookingIntent.SelectDate(availability.date)) }
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Time Selection
-                item {
-                    if (state.selectedDate != null) {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Select Time", style = MaterialTheme.typography.titleMedium)
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                val slots = state.availability.find { it.date == state.selectedDate }?.slots ?: emptyList()
-                                slots.forEach { slot ->
-                                    TimeChip(
-                                        time = slot.time,
-                                        isAvailable = slot.isAvailable,
-                                        isSelected = state.selectedTime == slot.time,
-                                        onClick = { viewModel.onIntent(BookingIntent.SelectTime(slot.time)) }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Price Breakdown
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Bill Summary", style = MaterialTheme.typography.titleMedium)
-                        PriceRow("Item Total", state.priceBreakdown.basePrice)
-                        if (state.priceBreakdown.addOnsTotal > 0) PriceRow("Add-ons", state.priceBreakdown.addOnsTotal)
-                        if (state.priceBreakdown.travelFee > 0) PriceRow("Travel Fee", state.priceBreakdown.travelFee)
-                        if (state.priceBreakdown.discount > 0) PriceRow("Discount", -state.priceBreakdown.discount, Color(0xFF2E7D5B))
-                        if (state.priceBreakdown.loyaltyRedemption > 0) PriceRow("Loyalty Redeemed", -state.priceBreakdown.loyaltyRedemption, Color(0xFF2E7D5B))
-                        HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f))
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Amount to Pay", style = MaterialTheme.typography.titleLarge)
-                            Text("₹${state.priceBreakdown.total}", style = MaterialTheme.typography.titleLarge)
-                        }
-                    }
+                    )
+                    4 -> Step4ConfirmBookingView(
+                        state = state,
+                        viewModel = viewModel,
+                        onNavigateToAddresses = onNavigateToAddresses
+                    )
                 }
             }
         }
@@ -207,108 +146,365 @@ fun BookingScreen(
 }
 
 @Composable
-fun AddOnItem(addOn: AddOn, isSelected: Boolean, onToggle: () -> Unit) {
-    Surface(
-        onClick = onToggle,
-        shape = MaterialTheme.shapes.medium,
-        color = if (isSelected) Charcoal.copy(alpha = 0.05f) else Color.White,
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (isSelected) Charcoal else Color.LightGray)
+fun BookingStepProgressRow(currentStep: Int) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column {
-                Text(addOn.name, style = MaterialTheme.typography.bodyLarge)
-                Text(addOn.duration, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+        listOf("Service", "Stylist", "Date/Time", "Confirm").forEachIndexed { index, stepName ->
+            val stepNumber = index + 1
+            val isActive = stepNumber == currentStep
+            val isCompleted = stepNumber < currentStep
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(
+                            when {
+                                isActive -> HoneyAmber
+                                isCompleted -> DeepIndigo
+                                else -> Color(0xFFDCD8CF)
+                            }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isCompleted) {
+                        Icon(Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                    } else {
+                        Text("$stepNumber", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+                Spacer(Modifier.width(4.dp))
+                Text(
+                    text = stepName,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isActive || isCompleted) AppText else MutedText,
+                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
+                )
             }
-            Text("₹${addOn.price}", style = MaterialTheme.typography.titleSmall)
         }
     }
 }
 
+// ----------------- STEP 1: SELECT SERVICE -----------------
 @Composable
-fun PriceRow(label: String, amount: Double, color: Color = Charcoal) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
-        Text("${if (amount < 0) "- " else ""}₹${if (amount < 0) -amount else amount}", style = MaterialTheme.typography.bodyMedium, color = color)
-    }
-}
+fun Step1SelectServiceView(
+    state: BookingState,
+    onSelectService: (Service) -> Unit
+) {
+    val sampleServices = listOf(
+        Service("ser1", "Hair Spa", 599.0, "60 min", "Deep conditioning & scalp massage", "hair"),
+        Service("ser2", "Haircut & Styling", 299.0, "30 min", "Master cut, wash & blow dry", "hair"),
+        Service("ser3", "Beard Trim & Shape", 199.0, "45 min", "Razor sharp beard detailing", "beard"),
+        Service("ser4", "Face Clean Up & Detan", 499.0, "40 min", "Instant brightening & pore cleanse", "skin")
+    )
+    val servicePhotos = mapOf(
+        "ser1" to "https://images.unsplash.com/photo-1519699047748-de8e457a634e?w=400&q=80",
+        "ser2" to "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=400&q=80",
+        "ser3" to "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=400&q=80",
+        "ser4" to "https://images.unsplash.com/photo-1512290900672-1f02e71d4793?w=400&q=80"
+    )
 
-@Composable
-fun DateChip(date: String, isSelected: Boolean, onClick: () -> Unit) {
-    Surface(
-        onClick = onClick,
-        shape = MaterialTheme.shapes.medium,
-        color = if (isSelected) Charcoal else Color.White,
-        border = if (isSelected) null else BoxCombinedBorder,
-        shadowElevation = if (isSelected) 4.dp else 0.dp
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp), contentAlignment = Alignment.Center) {
-            Text(date, color = if (isSelected) Champagne else Charcoal)
+        item {
+            Text("Choose a Service", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
-    }
-}
 
-@Composable
-fun TimeChip(time: String, isAvailable: Boolean, isSelected: Boolean, onClick: () -> Unit) {
-    Surface(
-        onClick = if (isAvailable) onClick else ({}),
-        shape = MaterialTheme.shapes.small,
-        color = when {
-            isSelected -> Charcoal
-            !isAvailable -> Color.LightGray.copy(alpha = 0.5f)
-            else -> Color.White
-        },
-        border = if (isSelected || !isAvailable) null else BoxCombinedBorder
-    ) {
-        Box(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)) {
-            Text(
-                time,
-                color = if (isSelected) Champagne else if (isAvailable) Charcoal else Color.Gray,
-                style = MaterialTheme.typography.labelMedium
+        items(sampleServices) { service ->
+            ServiceItemCard(
+                service = service,
+                isSelected = state.selectedService?.id == service.id,
+                onSelect = { onSelectService(service) },
+                showRadio = true,
+                imageUrl = servicePhotos[service.id]
             )
         }
     }
 }
 
+// ----------------- STEP 2: SELECT PROFESSIONAL -----------------
 @Composable
-fun BookingSuccessView(onBack: () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+fun Step2SelectProfessionalView(
+    state: BookingState,
+    onSelectProfessional: (Professional) -> Unit
+) {
+    val sampleStylists = listOf(
+        Professional("pro1", "Arjun", "Senior Stylist", 4.8, "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80", listOf("Master Haircut", "Hair Spa")),
+        Professional("pro2", "Rahul", "Stylist", 4.6, "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80", listOf("Fade", "Beard Trim")),
+        Professional("pro3", "Vikram", "Expert Stylist", 4.7, "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=400&q=80", listOf("Hair Spa", "Facials"))
+    )
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(Icons.Default.CheckCircle, contentDescription = null, modifier = Modifier.size(80.dp), tint = Color(0xFF2E7D5B))
-        Spacer(Modifier.height(16.dp))
-        Text("Booking Confirmed!", style = MaterialTheme.typography.headlineMedium)
-        Text("We've sent the details to your phone.", style = MaterialTheme.typography.bodyLarge)
-        Spacer(Modifier.height(32.dp))
-        Button(
-            onClick = onBack,
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne)
-        ) {
-            Text("Back to Home")
+        item {
+            Text("Select Professional", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        }
+
+        items(sampleStylists) { pro ->
+            StylistCard(
+                professional = pro,
+                isSelected = state.selectedProfessional?.id == pro.id,
+                onSelect = { onSelectProfessional(pro) },
+                showRadio = true
+            )
         }
     }
 }
 
-private val BoxCombinedBorder = androidx.compose.foundation.BorderStroke(1.dp, Color.LightGray)
-
-@OptIn(ExperimentalLayoutApi::class)
+// ----------------- STEP 3: SELECT DATE & TIME -----------------
 @Composable
-private fun FlowRow(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    content: @Composable () -> Unit
+fun Step3SelectDateTimeView(
+    state: BookingState,
+    onSelectDate: (String) -> Unit,
+    onSelectSlot: (String) -> Unit
 ) {
-    androidx.compose.foundation.layout.FlowRow(
-        modifier = modifier,
-        horizontalArrangement = horizontalArrangement,
-        verticalArrangement = verticalArrangement,
-        content = { content() }
-    )
+    var selectedDay by remember { mutableIntStateOf(21) }
+    var selectedTime by remember { mutableStateOf(state.selectedTime ?: "10:30 AM") }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            GroomoraCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { /* Prev */ }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Prev")
+                        }
+                        Text("May 2025", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        IconButton(onClick = { /* Next */ }) {
+                            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next")
+                        }
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceAround
+                    ) {
+                        listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").forEach { day ->
+                            Text(day, style = MaterialTheme.typography.labelSmall, color = MutedText, textAlign = TextAlign.Center, modifier = Modifier.width(36.dp))
+                        }
+                    }
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(
+                            listOf(1, 2, 3, 4, 5, 6, 7),
+                            listOf(8, 9, 10, 11, 12, 13, 14),
+                            listOf(15, 16, 17, 18, 19, 20, 21),
+                            listOf(22, 23, 24, 25, 26, 27, 28)
+                        ).forEach { week ->
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
+                                week.forEach { d ->
+                                    val isDaySelected = selectedDay == d
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(if (isDaySelected) DeepIndigo else Color.Transparent)
+                                            .clickable {
+                                                selectedDay = d
+                                                onSelectDate("$d May 2025")
+                                            },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            "$d",
+                                            color = if (isDaySelected) Color.White else AppText,
+                                            fontWeight = if (isDaySelected) FontWeight.Bold else FontWeight.Normal,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Text("Morning Slots", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(8.dp))
+            val morningSlots = listOf("09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM")
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                morningSlots.take(3).forEach { slot ->
+                    TimeSlotPill(slot = slot, isSelected = selectedTime == slot, onSelect = {
+                        selectedTime = slot
+                        onSelectSlot(slot)
+                    })
+                }
+            }
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                morningSlots.drop(3).forEach { slot ->
+                    TimeSlotPill(slot = slot, isSelected = selectedTime == slot, onSelect = {
+                        selectedTime = slot
+                        onSelectSlot(slot)
+                    })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RowScope.TimeSlotPill(slot: String, isSelected: Boolean, onSelect: () -> Unit) {
+    Surface(
+        modifier = Modifier.weight(1f).clickable(onClick = onSelect),
+        shape = CircleShape,
+        color = if (isSelected) DeepIndigo else Color.White,
+        border = if (isSelected) null else BorderStroke(1.dp, BorderGray)
+    ) {
+        Box(modifier = Modifier.padding(vertical = 10.dp), contentAlignment = Alignment.Center) {
+            Text(
+                slot,
+                color = if (isSelected) Color.White else AppText,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+            )
+        }
+    }
+}
+
+// ----------------- STEP 4: CONFIRM BOOKING -----------------
+@Composable
+fun Step4ConfirmBookingView(
+    state: BookingState,
+    viewModel: BookingViewModel,
+    onNavigateToAddresses: () -> Unit
+) {
+    var couponInput by remember { mutableStateOf("") }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            GroomoraCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("Appointment Summary", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    HorizontalDivider(color = BorderGray)
+
+                    GroomoraSummaryRow("Service", state.selectedService?.name ?: state.selectedPackage?.name ?: "Hair Spa")
+                    GroomoraSummaryRow("Professional", state.selectedProfessional?.name ?: "Arjun")
+                    GroomoraSummaryRow("Date", state.selectedDate ?: "21 May 2025")
+                    GroomoraSummaryRow("Time", state.selectedTime ?: "10:30 AM")
+                    GroomoraSummaryRow("Duration", state.selectedService?.duration ?: "60 min")
+                    HorizontalDivider(color = BorderGray)
+                    GroomoraSummaryRow("Amount", "₹${state.priceBreakdown.total.toInt()}", isBold = true, valueColor = HoneyAmber)
+                }
+            }
+        }
+
+        item {
+            GroomoraCard(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        GroomoraOutlinedTextField(
+
+                            value = couponInput,
+                            onValueChange = { couponInput = it },
+                            placeholder = "Enter coupon code",
+                            modifier = Modifier.weight(1f)
+                        )
+                        GroomoraSecondaryButton(
+                            text = "Apply",
+                            onClick = { viewModel.onIntent(BookingIntent.ApplyOfferCode(couponInput.trim().uppercase())) },
+                            height = 48.dp
+                        )
+                    }
+
+                    state.appliedOffer?.let { offer ->
+                        Spacer(Modifier.height(6.dp))
+                        GroomoraCaption(
+                            text = "Applied: ${offer.title} (-₹${state.priceBreakdown.discount.toInt()})",
+                            color = SuccessGreen,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun BookingConfirmationSuccessView(
+    confirmationId: String,
+    onViewHistory: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(WarmIvory)
+            .padding(24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        GroomoraCard(
+            modifier = Modifier.fillMaxWidth(),
+            elevation = 8.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(SuccessGreen),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = "Success", tint = Color.White, modifier = Modifier.size(40.dp))
+                }
+
+                Text("Booking Confirmed!", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = AppText)
+                Text(
+                    "Your appointment ID is $confirmationId.\nWe've sent the details to your notifications.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MutedText,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(Modifier.height(8.dp))
+
+                GroomoraPrimaryButton(
+                    text = "View My Bookings",
+                    onClick = onViewHistory,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
 }

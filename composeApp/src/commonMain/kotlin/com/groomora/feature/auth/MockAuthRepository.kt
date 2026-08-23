@@ -11,10 +11,10 @@ class MockAuthRepository : AuthRepository {
 
     override suspend fun login(phoneNumber: String, otp: String): AuthState {
         _authState.value = AuthState.Loading
-        delay(1500) // Simulate network
+        delay(1000)
         val user = User(
             id = "user_123",
-            name = "John Doe",
+            name = "Groomora User",
             phoneNumber = phoneNumber,
             gender = UserGender.MALE
         )
@@ -22,13 +22,34 @@ class MockAuthRepository : AuthRepository {
         return _authState.value
     }
 
+    override suspend fun signUp(
+        name: String,
+        phoneNumber: String,
+        email: String,
+        gender: UserGender,
+        password: String,
+        referralCode: String?
+    ): AuthState {
+        _authState.value = AuthState.Loading
+        delay(1200)
+        val user = User(
+            id = "user_${(1000..9999).random()}",
+            name = name,
+            phoneNumber = phoneNumber,
+            email = email,
+            gender = gender
+        )
+        _authState.value = AuthState.Authenticated(user)
+        return _authState.value
+    }
+
     override suspend fun logout() {
-        delay(500)
+        delay(300)
         _authState.value = AuthState.Unauthenticated
     }
 
     override suspend fun updateProfile(user: User): AuthState {
-        delay(1000)
+        delay(800)
         _authState.value = AuthState.Authenticated(user)
         return _authState.value
     }

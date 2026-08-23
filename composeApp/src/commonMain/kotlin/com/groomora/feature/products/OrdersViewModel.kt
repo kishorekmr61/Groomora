@@ -19,7 +19,7 @@ class OrdersViewModel(
     fun onIntent(intent: OrdersIntent) {
         when (intent) {
             OrdersIntent.LoadOrders -> loadOrders()
-            is OrdersIntent.CancelOrder -> cancelOrder(intent.orderId)
+            is OrdersIntent.CancelOrder -> cancelOrder(intent.orderId, intent.reason)
         }
     }
 
@@ -32,10 +32,14 @@ class OrdersViewModel(
         }
     }
 
-    private fun cancelOrder(orderId: String) {
+    private fun cancelOrder(orderId: String, reason: String) {
         viewModelScope.launch {
-            val success = orderRepository.cancelOrder(orderId)
-            if (success) loadOrders()
+            _state.update { it.copy(isLoading = true) }
+            val success = orderRepository.cancelOrder(orderId, reason)
+            if (success) {
+                _state.update { it.copy(message = "Order $orderId cancelled. Refund processing initiated.") }
+                loadOrders()
+            }
         }
     }
 }

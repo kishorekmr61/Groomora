@@ -10,7 +10,11 @@ data class Order(
     val status: OrderStatus,
     val date: String,
     val deliveryAddress: String,
-    val trackingNumber: String? = null
+    val paymentMethod: String = "UPI / Online",
+    val trackingNumber: String? = null,
+    val refundStatus: OrderRefundStatus = OrderRefundStatus.NONE,
+    val cancellationReason: String? = null,
+    val canCancel: Boolean = true
 )
 
 @Serializable
@@ -25,13 +29,19 @@ enum class OrderStatus {
     PLACED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, REFUNDED
 }
 
+enum class OrderRefundStatus {
+    NONE, INITIATED, PROCESSING, REFUNDED
+}
+
 data class OrdersState(
     val isLoading: Boolean = false,
     val orders: List<Order> = emptyList(),
+    val cancellingOrderId: String? = null,
+    val message: String? = null,
     val error: String? = null
 )
 
 sealed interface OrdersIntent {
     data object LoadOrders : OrdersIntent
-    data class CancelOrder(val orderId: String) : OrdersIntent
+    data class CancelOrder(val orderId: String, val reason: String) : OrdersIntent
 }

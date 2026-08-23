@@ -62,8 +62,29 @@ sealed interface Screen {
     data object Login : Screen
 
     @Serializable
+    data object SignUp : Screen
+
+    @Serializable
     data object AddressManagement : Screen
+
 
     @Serializable
     data object Onboarding : Screen
+
+    @Serializable
+    data object Support : Screen
+
+    @Serializable
+    data object Beauty : Screen
+
+    @Serializable
+    data object BookingHistory : Screen
+
+    @Serializable
+    data object GenderSelection : Screen
+
+    @Serializable
+    data class GenderServices(val gender: String) : Screen
 }
+
+

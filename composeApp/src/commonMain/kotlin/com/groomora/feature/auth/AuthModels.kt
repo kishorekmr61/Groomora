@@ -26,6 +26,14 @@ sealed interface AuthState {
 
 sealed interface AuthIntent {
     data class Login(val phoneNumber: String, val otp: String) : AuthIntent
+    data class SignUp(
+        val name: String,
+        val phoneNumber: String,
+        val email: String,
+        val gender: UserGender,
+        val password: String,
+        val referralCode: String? = null
+    ) : AuthIntent
     data object Logout : AuthIntent
     data class UpdateProfile(val user: User) : AuthIntent
 }

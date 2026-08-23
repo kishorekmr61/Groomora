@@ -7,13 +7,13 @@
 - [x] Saved addresses and default address management
 - [x] Search (Services, Shops, Professionals, Styles, Products)
 - [x] Nearby list view
-- [ ] Nearby map view
+- [x] Nearby map view (Interactive map pins & bottom shop preview sheet)
 - [x] Categories: Hair, Skin, Makeup, Nails, Beard, Grooming, Bridal, Beauty, Home Service
 - [x] Gender-specific paths (Men, Women, Unisex)
 - [x] Recommendations (Top-rated, Nearby, Trending, Personalized)
 - [x] Home-screen promotional banners
 - [x] Configurable special-offer announcements (Text, Image, CTA, Schedule)
-- [ ] Recently viewed / Favorites / Rebook modules
+- [x] Recently viewed / Favorites / Rebook modules ("Due for grooming" & "Book Again")
 
 ## B. SHOPS & PROFESSIONALS
 - [x] Shop details (Status, Address, Distance, Hours)
@@ -42,26 +42,26 @@
 - [x] Location toggle (Shop vs. Home Service)
 - [x] Address validation for home services (Mocked)
 - [x] Travel time and Travel fee calculation (Mocked)
-- [ ] Offer/Coupon application (Logic pending)
-- [x] Loyalty points redemption (UI ready, mock logic in VM)
-- [x] Price breakdown (Base + Add-ons + Fee - Discount)
-- [x] Payment method selection (UI Placeholder)
-- [x] Booking confirmation and History
-- [ ] Reschedule and Cancellation flow
-- [ ] Refund status tracking
+- [x] Offer/Coupon application (Live validation, discount rules & removal)
+- [x] Loyalty points redemption (UI ready, dynamic points calculation in VM)
+- [x] Price breakdown (Base + Add-ons + Fee - Discount - Loyalty)
+- [x] Payment method selection (UPI, Credit/Debit Card, Net Banking, Pay at Venue)
+- [x] Booking confirmation and History (Tracking ID, status, and details)
+- [x] Reschedule and Cancellation flow (Modal dialogs & state updates)
+- [x] Refund status tracking (Initiated -> Processing -> Refunded)
 - [x] One-tap rebooking
 
 ## E. SPECIALIZED SERVICES
 - [x] Bridal: Makeup, Hair, Saree draping, Pre-bridal packages
 - [x] Home Services: Service radius validation, ETA status, Hygiene messaging
-- [ ] Beauty Parlour: Waxing, Facials, Treatments (Category exists, need specialized content)
+- [x] Beauty Parlour: Waxing, Facials, Treatments, Nail Art, Hair Spa & Curated Bundles
 
 ## F. COMMERCE (PRODUCTS)
 - [x] Product catalog and Search/Filter
 - [x] Product details and Gallery
 - [x] Cart management
-- [ ] Checkout flow (Address/Payment)
-- [x] Order history and Shipping tracking
+- [x] Checkout flow (Address, Payment method, Price Breakdown, Place Order)
+- [x] Order history and Shipping tracking (Tracking ID, Status badges, and Cancellation flow with refunds)
 
 ## G. OFFERS & PROMOTIONS
 - [x] Offer types: First-booking, Shop-specific, Seasonal, Bridal, Referral
@@ -77,7 +77,7 @@
 
 ## I. RETENTION & REVIEWS
 - [x] Favorites (Shops, Professionals, Services)
-- [ ] Booking reminders
+- [x] Booking reminders & "Due for your next service" journeys
 - [x] Review system (Post-completion only)
 - [x] Verified review markers
 
@@ -94,7 +94,7 @@
 - [x] Location/Geo rules engine
 - [x] Notifications Center
 - [x] Help & Support (FAQ + Tickets)
-- [ ] Analytics (Funnels, Journey tracking)
-- [ ] Crash reporting and Performance monitoring
-- [ ] Offline / Error state handling
-- [ ] Secure payment integration
+- [x] Analytics (Funnels, Journey tracking, Privacy-safe event logging)
+- [x] Crash reporting and Performance monitoring (CrashReporter abstraction)
+- [x] Offline / Error state handling (Visual error banners and indicators)
+- [x] Secure payment integration (Multi-gateway mock selector & settlement status)

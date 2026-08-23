@@ -5,22 +5,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.groomora.design.Champagne
-import com.groomora.design.Charcoal
-import com.groomora.design.WarmIvory
-import com.groomora.feature.discovery.ShopCard
+import com.groomora.design.*
+import com.groomora.design.components.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavoritesScreen(
     viewModel: FavoritesViewModel,
@@ -31,34 +25,21 @@ fun FavoritesScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("My Favorites") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Charcoal,
-                    titleContentColor = Champagne,
-                    navigationIconContentColor = Champagne
-                )
+            GroomoraTopAppBar(
+                title = "My Favorites",
+                onBack = onBack
             )
         }
     ) { padding ->
         if (state.isLoading) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = Charcoal)
-            }
+            GroomoraLoadingState()
         } else if (state.favoriteShops.isEmpty() && state.favoriteProfessionals.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Favorite, contentDescription = null, modifier = Modifier.size(64.dp), tint = Color.LightGray)
-                    Spacer(Modifier.height(16.dp))
-                    Text("No favorites yet", style = MaterialTheme.typography.bodyLarge, color = Color.Gray)
-                    Text("Save shops and professionals to find them easily.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
-                }
-            }
+            GroomoraEmptyState(
+                title = "No favorites yet",
+                message = "Save shops and professionals to find them easily.",
+                icon = Icons.Default.Favorite,
+                modifier = Modifier.padding(padding)
+            )
         } else {
             LazyColumn(
                 modifier = Modifier
@@ -70,14 +51,21 @@ fun FavoritesScreen(
             ) {
                 if (state.favoriteShops.isNotEmpty()) {
                     item {
-                        Text("Shops", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            text = "Shops",
+                            style = MaterialTheme.typography.titleLarge,
+                            color = AppText
+                        )
                     }
                     items(state.favoriteShops) { shop ->
-                        ShopCard(shop = shop, onClick = { onNavigateToShop(shop.id) })
+                        ShopCard(
+                            shop = shop,
+                            onViewShop = { onNavigateToShop(shop.id) },
+                            isFavorite = true,
+                            onFavoriteToggle = { viewModel.onIntent(FavoritesIntent.ToggleShopFavorite(shop.id)) }
+                        )
                     }
                 }
-                
-                // Add more sections for professionals if needed
             }
         }
     }
