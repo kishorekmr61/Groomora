@@ -37,7 +37,7 @@ fun SignUpScreen(
     var phoneNumber by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var selectedGender by remember { mutableStateOf(UserGender.MALE) }
+    var selectedGender by remember { mutableStateOf<UserGender?>(null) }
     var referralCode by remember { mutableStateOf("") }
     var agreedToTerms by remember { mutableStateOf(true) }
 
@@ -46,7 +46,9 @@ fun SignUpScreen(
     var phoneError by remember { mutableStateOf<String?>(null) }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    var genderError by remember { mutableStateOf<String?>(null) }
     var termsError by remember { mutableStateOf<String?>(null) }
+
 
     LaunchedEffect(Unit) {
         DependencyContainer.analyticsManager.logScreenView("signup_screen")
@@ -109,7 +111,7 @@ fun SignUpScreen(
                 textAlign = TextAlign.Center
             )
             GroomoraCaption(
-                text = "Experience seamless salon & at-home grooming",
+                text = "Your Style. Your Way.",
                 textAlign = TextAlign.Center
             )
 
@@ -182,9 +184,13 @@ fun SignUpScreen(
                         errorMessage = emailError
                     )
 
-                    // 4. Gender Selector
+                    // 4. Gender Selector (Mandatory)
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        GroomoraCaption(text = "Gender *", fontWeight = FontWeight.Bold, color = AppText)
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            GroomoraCaption(text = "Gender *", fontWeight = FontWeight.Bold, color = if (genderError != null) ErrorRed else AppText)
+                            Spacer(Modifier.width(4.dp))
+                            Text("(Mandatory)", style = MaterialTheme.typography.labelSmall, color = if (genderError != null) ErrorRed else MutedText)
+                        }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -195,12 +201,15 @@ fun SignUpScreen(
                                     shape = CircleShape,
                                     color = if (isSelected) HoneyAmber else Color.White,
                                     border = androidx.compose.foundation.BorderStroke(
-                                        1.dp,
-                                        if (isSelected) HoneyAmber else BorderGray
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) HoneyAmber else if (genderError != null) ErrorRed else BorderGray
                                     ),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .clickable { selectedGender = gender }
+                                        .clickable {
+                                            selectedGender = gender
+                                            genderError = null
+                                        }
                                 ) {
                                     Text(
                                         text = gender.name.lowercase().replaceFirstChar { it.uppercase() },
@@ -213,7 +222,11 @@ fun SignUpScreen(
                                 }
                             }
                         }
+                        if (genderError != null) {
+                            GroomoraCaption(text = genderError!!, color = ErrorRed)
+                        }
                     }
+
 
                     // 5. Password
                     GroomoraPasswordField(
@@ -292,6 +305,11 @@ fun SignUpScreen(
                                 hasError = true
                             }
 
+                            if (selectedGender == null) {
+                                genderError = "Please select your gender (Mandatory)"
+                                hasError = true
+                            }
+
                             if (password.isBlank()) {
                                 passwordError = "Password is mandatory"
                                 hasError = true
@@ -305,22 +323,23 @@ fun SignUpScreen(
                                 hasError = true
                             }
 
-                            if (!hasError) {
+                            if (!hasError && selectedGender != null) {
                                 DependencyContainer.analyticsManager.logEvent(
                                     "signup_attempt",
-                                    mapOf("gender" to selectedGender.name)
+                                    mapOf("gender" to selectedGender!!.name)
                                 )
                                 viewModel.onIntent(
                                     AuthIntent.SignUp(
                                         name = fullName.trim(),
                                         phoneNumber = phoneNumber.trim(),
                                         email = email.trim(),
-                                        gender = selectedGender,
+                                        gender = selectedGender!!,
                                         password = password,
                                         referralCode = referralCode.trim().takeIf { it.isNotBlank() }
                                     )
                                 )
                             }
+
                         },
                         modifier = Modifier.fillMaxWidth(),
                         isLoading = state is AuthState.Loading

@@ -28,7 +28,9 @@ import com.groomora.feature.loyalty.LoyaltyScreen
 import com.groomora.feature.loyalty.LoyaltyViewModel
 import com.groomora.feature.profile.ProfileScreen
 import com.groomora.feature.profile.ProfileViewModel
+import com.groomora.feature.profile.EditProfileScreen
 import com.groomora.feature.profile.AddressManagementScreen
+
 import com.groomora.feature.profile.AddressManagementViewModel
 import com.groomora.feature.profile.SettingsScreen
 import com.groomora.feature.profile.SettingsViewModel
@@ -48,12 +50,16 @@ import com.groomora.feature.reviews.ReviewScreen
 import com.groomora.feature.reviews.ReviewViewModel
 import com.groomora.feature.reviews.ReviewTargetType
 import com.groomora.feature.homeservice.HomeServiceScreen
-
 import com.groomora.feature.homeservice.HomeServiceViewModel
+import com.groomora.feature.services.ServicesCatalogScreen
 import com.groomora.feature.onboarding.OnboardingScreen
+
 import com.groomora.feature.auth.LoginScreen
 import com.groomora.feature.auth.SignUpScreen
 import com.groomora.feature.auth.AuthViewModel
+import com.groomora.feature.auth.AuthState
+import com.groomora.feature.auth.User
+import com.groomora.feature.auth.UserGender
 
 
 
@@ -91,6 +97,29 @@ fun App() {
         }
         var showFlexibleUpdateDialog by remember { mutableStateOf(true) }
 
+        val authState by DependencyContainer.authRepository.authState.collectAsState(
+            initial = AuthState.Authenticated(
+                User(
+                    id = "user_default_1",
+                    name = "Alex Morgan",
+                    phoneNumber = "+91 98765 43210",
+                    email = "alex.morgan@groomora.com",
+                    profileImageUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80",
+                    gender = UserGender.FEMALE
+                )
+            )
+        )
+        var pendingBookingScreen by remember { mutableStateOf<Screen.Booking?>(null) }
+
+        val navigateToBooking: (Screen.Booking) -> Unit = { bookingRoute ->
+            if (authState is AuthState.Authenticated) {
+                navController.navigate(bookingRoute)
+            } else {
+                pendingBookingScreen = bookingRoute
+                navController.navigate(Screen.Login)
+            }
+        }
+
         Column(modifier = Modifier.fillMaxSize()) {
             NetworkOfflineBanner(isConnected = isNetworkConnected)
 
@@ -118,7 +147,7 @@ fun App() {
                 else -> {
                     NavHost(
                         navController = navController,
-                        startDestination = Screen.Onboarding,
+                        startDestination = Screen.Home,
                         modifier = Modifier.weight(1f)
                     ) {
 
@@ -139,8 +168,20 @@ fun App() {
                 LoginScreen(
                     viewModel = authViewModel,
                     onLoginSuccess = {
-                        navController.navigate(Screen.Home) {
-                            popUpTo(Screen.Login) { inclusive = true }
+                        val targetBooking = pendingBookingScreen
+                        if (targetBooking != null) {
+                            pendingBookingScreen = null
+                            navController.popBackStack()
+                            navController.navigate(targetBooking)
+                        } else {
+                            val previousBackStack = navController.previousBackStackEntry
+                            if (previousBackStack != null && previousBackStack.destination.route?.contains("Login") == false && previousBackStack.destination.route?.contains("Onboarding") == false) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate(Screen.Home) {
+                                    popUpTo(Screen.Login) { inclusive = true }
+                                }
+                            }
                         }
                     },
                     onNavigateToSignUp = {
@@ -155,8 +196,20 @@ fun App() {
                 SignUpScreen(
                     viewModel = authViewModel,
                     onSignUpSuccess = {
-                        navController.navigate(Screen.Home) {
-                            popUpTo(Screen.SignUp) { inclusive = true }
+                        val targetBooking = pendingBookingScreen
+                        if (targetBooking != null) {
+                            pendingBookingScreen = null
+                            navController.popBackStack()
+                            navController.navigate(targetBooking)
+                        } else {
+                            val previousBackStack = navController.previousBackStackEntry
+                            if (previousBackStack != null && previousBackStack.destination.route?.contains("SignUp") == false && previousBackStack.destination.route?.contains("Onboarding") == false) {
+                                navController.popBackStack()
+                            } else {
+                                navController.navigate(Screen.Home) {
+                                    popUpTo(Screen.SignUp) { inclusive = true }
+                                }
+                            }
                         }
                     },
                     onNavigateToLogin = {
@@ -177,6 +230,12 @@ fun App() {
                     onNavigateToDiscovery = { categoryId ->
                         navController.navigate(Screen.Discovery(categoryId = categoryId))
                     },
+                    onNavigateToServices = { category ->
+                        navController.navigate(Screen.Services(initialCategory = category))
+                    },
+                    onNavigateToAddresses = {
+                        navController.navigate(Screen.AddressManagement)
+                    },
                     onNavigateToOffers = { navController.navigate(Screen.Offers) },
                     onNavigateToProducts = { navController.navigate(Screen.Products) },
                     onNavigateToProfile = { navController.navigate(Screen.Profile) },
@@ -187,11 +246,26 @@ fun App() {
                     onNavigateToNotifications = { navController.navigate(Screen.Notifications) },
                     onNavigateToBookingHistory = { navController.navigate(Screen.BookingHistory) },
                     onNavigateToBooking = { serviceId ->
-                        navController.navigate(Screen.Booking(serviceId = serviceId))
+                        navigateToBooking(Screen.Booking(serviceId = serviceId))
                     },
                     onNavigateToGenderSelection = {
                         navController.navigate(Screen.GenderSelection)
                     }
+                )
+            }
+            composable<Screen.Services> { backStackEntry ->
+                val route = backStackEntry.toRoute<Screen.Services>()
+                ServicesCatalogScreen(
+                    initialCategory = route.initialCategory,
+                    onFindSalons = { serviceIds ->
+                        navController.navigate(Screen.Discovery(serviceIds = serviceIds))
+                    },
+                    onNavigateToHome = { navController.navigate(Screen.Home) },
+                    onNavigateToBookings = { navController.navigate(Screen.BookingHistory) },
+                    onNavigateToOffers = { navController.navigate(Screen.Offers) },
+                    onNavigateToWallet = { navController.navigate(Screen.Loyalty) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile) },
+                    onBack = { navController.popBackStack() }
                 )
             }
             composable<Screen.GenderSelection> {
@@ -213,7 +287,7 @@ fun App() {
                         navController.navigate(Screen.Discovery(categoryId = categoryId))
                     },
                     onNavigateToBooking = { serviceId ->
-                        navController.navigate(Screen.Booking(serviceId = serviceId))
+                        navigateToBooking(Screen.Booking(serviceId = serviceId))
                     },
                     onBack = { navController.popBackStack() }
                 )
@@ -227,13 +301,29 @@ fun App() {
                 }
                 DiscoveryScreen(
                     categoryId = route.categoryId,
+                    serviceIds = route.serviceIds,
                     viewModel = discoveryViewModel,
                     onNavigateToShop = { shopId ->
-                        navController.navigate(Screen.ShopDetails(shopId))
+                        if (route.serviceIds.isNotEmpty()) {
+                            navigateToBooking(
+                                Screen.Booking(
+                                    serviceIds = route.serviceIds,
+                                    shopId = shopId
+                                )
+                            )
+                        } else {
+                            navController.navigate(Screen.ShopDetails(shopId))
+                        }
                     },
+                    onNavigateToHome = { navController.navigate(Screen.Home) },
+                    onNavigateToBookings = { navController.navigate(Screen.BookingHistory) },
+                    onNavigateToOffers = { navController.navigate(Screen.Offers) },
+                    onNavigateToWallet = { navController.navigate(Screen.Loyalty) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile) },
                     onBack = { navController.popBackStack() }
                 )
             }
+
             composable<Screen.ShopDetails> { backStackEntry ->
                 val route = backStackEntry.toRoute<Screen.ShopDetails>()
                 val shopDetailsViewModel: ShopDetailsViewModel = viewModel {
@@ -245,7 +335,7 @@ fun App() {
                     shopId = route.shopId,
                     viewModel = shopDetailsViewModel,
                     onNavigateToBooking = { serviceId ->
-                        navController.navigate(Screen.Booking(serviceId = serviceId))
+                        navigateToBooking(Screen.Booking(serviceId = serviceId))
                     },
                     onNavigateToReviews = { id ->
                         navController.navigate(Screen.Reviews(targetId = id, type = ReviewTargetType.SHOP.name))
@@ -264,7 +354,7 @@ fun App() {
                     professionalId = route.professionalId,
                     viewModel = professionalProfileViewModel,
                     onNavigateToBooking = { serviceId ->
-                        navController.navigate(Screen.Booking(serviceId = serviceId))
+                        navigateToBooking(Screen.Booking(serviceId = serviceId))
                     },
                     onBack = { navController.popBackStack() }
                 )
@@ -281,6 +371,8 @@ fun App() {
                 BookingScreen(
                     serviceId = route.serviceId,
                     packageId = route.packageId,
+                    serviceIds = route.serviceIds,
+                    shopId = route.shopId,
                     viewModel = bookingViewModel,
                     onNavigateToAddresses = { navController.navigate(Screen.AddressManagement) },
                     onNavigateToHistory = { navController.navigate(Screen.BookingHistory) },
@@ -301,6 +393,10 @@ fun App() {
                     onNavigateToRebook = { serviceId ->
                         navController.navigate(Screen.Booking(serviceId = serviceId))
                     },
+                    onNavigateToHome = { navController.navigate(Screen.Home) },
+                    onNavigateToOffers = { navController.navigate(Screen.Offers) },
+                    onNavigateToWallet = { navController.navigate(Screen.Loyalty) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile) },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -312,6 +408,11 @@ fun App() {
                 }
                 OffersScreen(
                     viewModel = offersViewModel,
+                    onNavigateToHome = { navController.navigate(Screen.Home) },
+                    onNavigateToBookings = { navController.navigate(Screen.BookingHistory) },
+                    onNavigateToOffers = {},
+                    onNavigateToWallet = { navController.navigate(Screen.Loyalty) },
+                    onNavigateToProfile = { navController.navigate(Screen.Profile) },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -323,6 +424,11 @@ fun App() {
                 }
                 LoyaltyScreen(
                     viewModel = loyaltyViewModel,
+                    onNavigateToHome = { navController.navigate(Screen.Home) },
+                    onNavigateToBookings = { navController.navigate(Screen.BookingHistory) },
+                    onNavigateToOffers = { navController.navigate(Screen.Offers) },
+                    onNavigateToWallet = {},
+                    onNavigateToProfile = { navController.navigate(Screen.Profile) },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -340,9 +446,31 @@ fun App() {
                     onNavigateToAddresses = { navController.navigate(Screen.AddressManagement) },
                     onNavigateToFavorites = { navController.navigate(Screen.Favorites) },
                     onNavigateToSupport = { navController.navigate(Screen.Support) },
+                    onNavigateToEditProfile = { navController.navigate(Screen.EditProfile) },
+                    onNavigateToHome = { navController.navigate(Screen.Home) },
+                    onNavigateToOffers = { navController.navigate(Screen.Offers) },
+                    onNavigateToWallet = { navController.navigate(Screen.Loyalty) },
+                    onLogout = {
+                        navController.navigate(Screen.Login) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
+            composable<Screen.EditProfile> {
+                val profileViewModel: ProfileViewModel = viewModel {
+                    ProfileViewModel(
+                        authRepository = DependencyContainer.authRepository
+                    )
+                }
+                EditProfileScreen(
+                    viewModel = profileViewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+
             composable<Screen.Settings> {
                 val settingsViewModel: SettingsViewModel = viewModel {
                     SettingsViewModel()
@@ -426,7 +554,7 @@ fun App() {
                 BridalScreen(
                     viewModel = bridalViewModel,
                     onNavigateToBooking = { packageId ->
-                        navController.navigate(Screen.Booking(packageId = packageId))
+                        navigateToBooking(Screen.Booking(packageId = packageId))
                     },
                     onBack = { navController.popBackStack() }
                 )
@@ -440,7 +568,7 @@ fun App() {
                 BeautyScreen(
                     viewModel = beautyViewModel,
                     onNavigateToBooking = { serviceId ->
-                        navController.navigate(Screen.Booking(serviceId = serviceId))
+                        navigateToBooking(Screen.Booking(serviceId = serviceId))
                     },
                     onBack = { navController.popBackStack() }
                 )
@@ -492,8 +620,12 @@ fun App() {
                     onNavigateToDiscovery = { category ->
                         navController.navigate(Screen.Discovery(categoryId = category))
                     },
+                    onNavigateToBooking = { packageId ->
+                        navigateToBooking(Screen.Booking(packageId = packageId))
+                    },
                     onBack = { navController.popBackStack() }
                 )
+
             }
             composable<Screen.Support> {
                 val supportViewModel: SupportViewModel = viewModel {

@@ -14,29 +14,24 @@ class ProductViewModel(
 
     init {
         onIntent(ProductIntent.LoadProducts)
+        viewModelScope.launch {
+            productRepository.cartItems.collect { cart ->
+                _state.update { it.copy(cartItems = cart) }
+            }
+        }
     }
 
     fun onIntent(intent: ProductIntent) {
         when (intent) {
             ProductIntent.LoadProducts -> loadProducts()
             is ProductIntent.AddToCart -> {
-                val currentCart = _state.value.cartItems.toMutableMap()
-                val count = currentCart[intent.productId] ?: 0
-                currentCart[intent.productId] = count + 1
-                _state.update { it.copy(cartItems = currentCart) }
+                productRepository.addToCart(intent.productId)
             }
             is ProductIntent.RemoveFromCart -> {
-                val currentCart = _state.value.cartItems.toMutableMap()
-                val count = currentCart[intent.productId] ?: 0
-                if (count > 1) {
-                    currentCart[intent.productId] = count - 1
-                } else {
-                    currentCart.remove(intent.productId)
-                }
-                _state.update { it.copy(cartItems = currentCart) }
+                productRepository.removeFromCart(intent.productId)
             }
             ProductIntent.ClearCart -> {
-                _state.update { it.copy(cartItems = emptyMap()) }
+                productRepository.clearCart()
             }
         }
     }

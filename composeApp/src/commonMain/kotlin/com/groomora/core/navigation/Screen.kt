@@ -8,7 +8,11 @@ sealed interface Screen {
     data object Home : Screen
 
     @Serializable
-    data class Discovery(val categoryId: String? = null) : Screen
+    data class Discovery(val categoryId: String? = null, val serviceIds: List<String> = emptyList()) : Screen
+
+    @Serializable
+    data class Services(val initialCategory: String? = null) : Screen
+
 
     @Serializable
     data class ShopDetails(val shopId: String) : Screen
@@ -17,13 +21,22 @@ sealed interface Screen {
     data class ProfessionalProfile(val professionalId: String) : Screen
 
     @Serializable
-    data class Booking(val serviceId: String? = null, val packageId: String? = null) : Screen
+    data class Booking(
+        val serviceId: String? = null,
+        val packageId: String? = null,
+        val serviceIds: List<String> = emptyList(),
+        val shopId: String? = null
+    ) : Screen
 
     @Serializable
     data object Profile : Screen
 
     @Serializable
+    data object EditProfile : Screen
+
+    @Serializable
     data object Settings : Screen
+
 
     @Serializable
     data object Favorites : Screen

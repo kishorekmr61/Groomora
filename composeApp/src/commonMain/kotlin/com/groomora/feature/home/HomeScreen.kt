@@ -27,9 +27,14 @@ import com.groomora.design.components.*
 import com.groomora.design.ads.GroomoraAdBanner
 
 
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.ui.semantics.Role
 import com.groomora.feature.discovery.Shop
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel,
@@ -44,8 +49,11 @@ fun HomeScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToBookingHistory: () -> Unit,
     onNavigateToBooking: (String) -> Unit,
-    onNavigateToGenderSelection: () -> Unit = {}
+    onNavigateToGenderSelection: () -> Unit = {},
+    onNavigateToAddresses: () -> Unit = {},
+    onNavigateToServices: (String?) -> Unit = {}
 ) {
+
     val state by viewModel.state.collectAsState()
     var searchQuery by remember { mutableStateOf("") }
 
@@ -59,7 +67,9 @@ fun HomeScreen(
             TopAppBar(
                 title = {
                     Column(
-                        modifier = Modifier.clickable { onNavigateToGenderSelection() }
+                        modifier = Modifier.clickable(role = Role.Button, onClickLabel = "Change address") {
+                            onNavigateToAddresses()
+                        }
                     ) {
                         Text(
                             "Home",
@@ -83,6 +93,7 @@ fun HomeScreen(
                         }
                     }
                 },
+
                 actions = {
                     IconButton(onClick = onNavigateToNotifications) {
                         BadgedBox(
@@ -137,78 +148,139 @@ fun HomeScreen(
 
                 // 2. Hero Carousel Banner
                 item {
-                    Box(modifier = Modifier.padding(horizontal = 16.dp)) {
-                        GroomoraCard(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(180.dp),
-                            containerColor = Charcoal,
-                            borderColor = null,
-                            elevation = 4.dp
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(18.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Column(
-                                    modifier = Modifier.weight(1.2f),
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        "Look Good\nFeel Better",
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        lineHeight = 24.sp
-                                    )
-                                    Spacer(Modifier.height(6.dp))
-                                    Text(
-                                        "Book your perfect style today!",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = Color.White.copy(alpha = 0.8f)
-                                    )
-                                    Spacer(Modifier.height(12.dp))
-                                    GroomoraPrimaryButton(
-                                        text = "Book Now",
-                                        onClick = { onNavigateToGenderSelection() },
-                                        height = 36.dp
-                                    )
-                                }
+                    val banners = if (state.banners.isNotEmpty()) state.banners else listOf(
+                        PromotionBanner("b1", "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80", "Look Good\nFeel Better", "Book your perfect style today • FLAT 20% OFF", "Book Now", "groomora://services"),
+                        PromotionBanner("b2", "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80", "Luxury Bridal\n& Glow Rituals", "Exclusive bridal packages for your special day", "Explore Bridal", "groomora://bridal"),
+                        PromotionBanner("b3", "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80", "Relaxing Spa\n& Home Care", "Certified salon experts at your doorstep • ₹150 OFF", "Book At Home", "groomora://homeservice")
+                    )
+                    val pagerState = rememberPagerState(pageCount = { banners.size })
+                    val coroutineScope = rememberCoroutineScope()
 
-                                Box(
+                    val bannerColors = listOf(
+                        Charcoal,
+                        Color(0xFF3B1E38),
+                        Color(0xFF1B3B36)
+                    )
+                    val bannerTags = listOf(
+                        "FLAT 20% OFF",
+                        "PRE-BRIDAL SPECIAL",
+                        "DOORSTEP SERVICE"
+                    )
+
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier.fillMaxWidth()
+                    ) { page ->
+                        val banner = banners[page]
+                        val cardBg = bannerColors.getOrElse(page % bannerColors.size) { Charcoal }
+                        val cardTag = bannerTags.getOrElse(page % bannerTags.size) { "SPECIAL OFFER" }
+
+                        Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                            GroomoraCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(180.dp),
+                                containerColor = cardBg,
+                                borderColor = null,
+                                elevation = 4.dp
+                            ) {
+                                Row(
                                     modifier = Modifier
-                                        .size(105.dp)
-                                        .clip(CircleShape)
-                                        .background(Charcoal),
-                                    contentAlignment = Alignment.Center
+                                        .fillMaxSize()
+                                        .padding(18.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    GroomoraImage(
-                                        url = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80",
-                                        contentDescription = "Male Model",
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
+                                    Column(
+                                        modifier = Modifier.weight(1.2f),
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Surface(
+                                            color = HoneyAmber,
+                                            shape = CircleShape
+                                        ) {
+                                            Text(
+                                                text = cardTag,
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = Color.White,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                        Spacer(Modifier.height(6.dp))
+                                        Text(
+                                            banner.title,
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White,
+                                            lineHeight = 22.sp
+                                        )
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(
+                                            banner.description,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.White.copy(alpha = 0.85f),
+                                            maxLines = 1
+                                        )
+                                        Spacer(Modifier.height(10.dp))
+                                        GroomoraPrimaryButton(
+                                            text = banner.ctaLabel,
+                                            onClick = {
+                                                when {
+                                                    banner.deepLink.contains("bridal") -> onNavigateToBridal()
+                                                    banner.deepLink.contains("homeservice") || banner.deepLink.contains("home") -> onNavigateToHomeService()
+                                                    else -> onNavigateToServices(null)
+                                                }
+                                            },
+                                            height = 36.dp
+                                        )
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(100.dp)
+                                            .clip(CircleShape)
+                                            .background(Color.White.copy(alpha = 0.1f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        GroomoraImage(
+                                            url = banner.imageUrl,
+                                            contentDescription = banner.title,
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
 
-                    // Pagination Dots
+                    // Interactive Pagination Dots
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Box(Modifier.size(8.dp).clip(CircleShape).background(HoneyAmber))
-                        Spacer(Modifier.width(6.dp))
-                        Box(Modifier.size(6.dp).clip(CircleShape).background(Color.LightGray))
-                        Spacer(Modifier.width(6.dp))
-                        Box(Modifier.size(6.dp).clip(CircleShape).background(Color.LightGray))
+                        repeat(banners.size) { index ->
+                            val isSelected = pagerState.currentPage == index
+                            Box(
+                                modifier = Modifier
+                                    .padding(horizontal = 3.dp)
+                                    .height(8.dp)
+                                    .width(if (isSelected) 24.dp else 8.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isSelected) HoneyAmber else Color.LightGray)
+                                    .clickable {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(index)
+                                        }
+                                    }
+                            )
+                        }
                     }
                 }
+
+
 
                 // 3. Quick Action Row (Reusable Circular Action Buttons)
                 item {
@@ -278,24 +350,25 @@ fun HomeScreen(
                             ExploreCategoryThumbnailCard(
                                 name = "Hair",
                                 imageUrl = "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=500&q=80",
-                                onClick = { onNavigateToDiscovery("hair") }
+                                onClick = { onNavigateToServices("Hair") }
                             )
                             ExploreCategoryThumbnailCard(
                                 name = "Skin",
                                 imageUrl = "https://images.unsplash.com/photo-1512290900672-1f02e71d4793?w=500&q=80",
-                                onClick = { onNavigateToDiscovery("skin") }
+                                onClick = { onNavigateToServices("Skin & Face") }
                             )
                             ExploreCategoryThumbnailCard(
                                 name = "Makeup",
                                 imageUrl = "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=500&q=80",
-                                onClick = { onNavigateToDiscovery("makeup") }
+                                onClick = { onNavigateToServices("Bridal") }
                             )
                             ExploreCategoryThumbnailCard(
                                 name = "Nails",
                                 imageUrl = "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=500&q=80",
-                                onClick = { onNavigateToDiscovery("nails") }
+                                onClick = { onNavigateToServices("Nails") }
                             )
                         }
+
                     }
                 }
 
@@ -484,11 +557,12 @@ fun HomeScreen(
                                         Spacer(Modifier.height(16.dp))
                                         GroomoraPrimaryButton(
                                             text = "Explore All Services",
-                                            onClick = { onNavigateToDiscovery(null) },
+                                            onClick = { onNavigateToServices(null) },
                                             containerColor = PlumPurple,
                                             modifier = Modifier.fillMaxWidth(),
                                             height = 42.dp
                                         )
+
                                     }
                                 }
                             }
@@ -551,9 +625,84 @@ fun HomeScreen(
                     }
                 }
 
+                // 7.5 BEAUTY & GROOMING STORE (Featured Products)
+                item {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text("Beauty & Grooming Store", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AppText)
+                                Text("Salon-grade haircare, skincare & beard essentials", style = MaterialTheme.typography.labelSmall, color = MutedText)
+                            }
+                            Text(
+                                "View All ->",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = HoneyAmber,
+                                modifier = Modifier.clickable { onNavigateToProducts() }
+                            )
+                        }
+
+                        val featuredProducts = listOf(
+                            Triple("Organic Argan Hair Growth Oil", "₹599", "https://images.unsplash.com/photo-1608248597359-009eb73d6d03?w=500&q=80"),
+                            Triple("Matte Finish Styling Clay", "₹450", "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&q=80"),
+                            Triple("Vitamin C Glow Face Wash", "₹349", "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=500&q=80"),
+                            Triple("Gold Radiance Night Cream", "₹899", "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500&q=80"),
+                            Triple("Beard Conditioning Balm", "₹399", "https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=500&q=80")
+                        )
+
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            items(featuredProducts) { (name, price, imageUrl) ->
+                                GroomoraCard(
+                                    modifier = Modifier
+                                        .width(160.dp)
+                                        .clickable { onNavigateToProducts() },
+                                    containerColor = Color.White
+                                ) {
+                                    Column {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(115.dp)
+                                                .clip(MaterialTheme.shapes.medium)
+                                                .background(Charcoal)
+                                        ) {
+                                            GroomoraImage(
+                                                url = imageUrl,
+                                                contentDescription = name,
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                        Column(modifier = Modifier.padding(10.dp)) {
+                                            Text(name, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, maxLines = 1, color = AppText)
+                                            Spacer(Modifier.height(2.dp))
+                                            Text(price, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = HoneyAmber)
+                                            Spacer(Modifier.height(8.dp))
+                                            GroomoraPrimaryButton(
+                                                text = "Buy Now",
+                                                onClick = onNavigateToProducts,
+                                                height = 32.dp,
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // 8. Trust Badges Strip
                 item {
                     LazyRow(
+
                         modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(horizontal = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(14.dp)

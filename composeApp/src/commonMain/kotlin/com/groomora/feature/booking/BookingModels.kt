@@ -73,7 +73,10 @@ data class BookingRecord(
 
 data class BookingState(
     val isLoading: Boolean = false,
+    val shopId: String? = null,
+    val shopName: String? = null,
     val selectedService: Service? = null,
+    val selectedServices: List<Service> = emptyList(),
     val selectedPackage: ServicePackage? = null,
     val selectedProfessional: Professional? = null,
     val selectedDate: String? = null,
@@ -106,8 +109,15 @@ data class PriceBreakdown(
 )
 
 sealed interface BookingIntent {
-    data class Initialize(val serviceId: String? = null, val packageId: String? = null) : BookingIntent
+    data class Initialize(
+        val serviceId: String? = null,
+        val packageId: String? = null,
+        val serviceIds: List<String> = emptyList(),
+        val shopId: String? = null
+    ) : BookingIntent
+    data class ToggleService(val service: Service) : BookingIntent
     data class SelectProfessional(val professional: Professional?) : BookingIntent
+
     data class SelectDate(val date: String) : BookingIntent
     data class SelectTime(val time: String) : BookingIntent
     data class ToggleHomeService(val isHome: Boolean) : BookingIntent

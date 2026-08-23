@@ -45,17 +45,34 @@ class HomeViewModel(
                     banners = listOf(
                         PromotionBanner(
                             id = "b1",
-                            imageUrl = "",
-                            title = "First Booking Offer",
-                            description = "Get 20% off on your first salon visit.",
+                            imageUrl = "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80",
+                            title = "Look Good\nFeel Better",
+                            description = "Book your perfect style today • FLAT 20% OFF",
                             ctaLabel = "Book Now",
-                            deepLink = "groomora://offers/first"
+                            deepLink = "groomora://services"
+                        ),
+                        PromotionBanner(
+                            id = "b2",
+                            imageUrl = "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80",
+                            title = "Luxury Bridal\n& Glow Rituals",
+                            description = "Exclusive bridal packages for your special day",
+                            ctaLabel = "Explore Bridal",
+                            deepLink = "groomora://bridal"
+                        ),
+                        PromotionBanner(
+                            id = "b3",
+                            imageUrl = "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=800&q=80",
+                            title = "Relaxing Spa\n& Home Care",
+                            description = "Certified salon experts at your doorstep • ₹150 OFF",
+                            ctaLabel = "Book At Home",
+                            deepLink = "groomora://homeservice"
                         )
                     )
                 )
             }.collect { newState ->
                 _state.value = newState
             }
+
         }
     }
 }

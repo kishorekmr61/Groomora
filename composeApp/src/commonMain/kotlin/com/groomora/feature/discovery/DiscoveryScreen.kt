@@ -16,18 +16,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.lazy.rememberLazyListState
+
 import com.groomora.app.DependencyContainer
 import com.groomora.design.*
 import com.groomora.design.components.*
 import com.groomora.design.ads.GroomoraNativeAdCard
+import kotlinx.coroutines.delay
+
 
 
 
 @Composable
 fun DiscoveryScreen(
     categoryId: String?,
+    serviceIds: List<String> = emptyList(),
     viewModel: DiscoveryViewModel,
     onNavigateToShop: (String) -> Unit,
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToBookings: () -> Unit = {},
+    onNavigateToOffers: () -> Unit = {},
+    onNavigateToWallet: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -44,11 +54,11 @@ fun DiscoveryScreen(
         }
     }
 
-
     Scaffold(
         topBar = {
             GroomoraTopAppBar(
-                title = "Nearby Places",
+                title = if (serviceIds.isNotEmpty()) "Matching Salons (${serviceIds.size} Services)" else "Nearby Places",
+                subtitle = if (serviceIds.isNotEmpty()) "Select a salon to pick your professional & slot" else null,
                 onBack = onBack,
                 actions = {
                     IconButton(onClick = { /* Search */ }) {
@@ -59,15 +69,16 @@ fun DiscoveryScreen(
         },
         bottomBar = {
             GroomoraBottomNav(
-                currentRoute = "discovery",
-                onHomeClick = onBack,
-                onBookingsClick = {},
-                onOffersClick = {},
-                onWalletClick = {},
-                onProfileClick = {}
+                currentRoute = "home",
+                onHomeClick = onNavigateToHome,
+                onBookingsClick = onNavigateToBookings,
+                onOffersClick = onNavigateToOffers,
+                onWalletClick = onNavigateToWallet,
+                onProfileClick = onNavigateToProfile
             )
         }
-    ) { padding ->
+    )
+ { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -182,7 +193,7 @@ fun DiscoveryScreen(
                                     )
                                 }
                                 GroomoraPrimaryButton(
-                                    text = "View Shop",
+                                    text = if (serviceIds.isNotEmpty()) "Select & Book" else "View Shop",
                                     onClick = { onNavigateToShop(shop.id) },
                                     height = 36.dp
                                 )
@@ -201,16 +212,32 @@ fun DiscoveryScreen(
                     }
                 )
             } else {
-                // List View (Reusable ShopCard Component)
+                // List View (Reusable ShopCard Component with Pagination)
+                val listState = rememberLazyListState()
+                var pageLimit by remember { mutableIntStateOf(4) }
+                val pagedShops = state.shops.take(pageLimit)
+
+                LaunchedEffect(listState, state.shops.size, pageLimit) {
+                    snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+                        .collect { lastIdx ->
+                            if (lastIdx != null && lastIdx >= pagedShops.size - 1 && pageLimit < state.shops.size) {
+                                delay(200)
+                                pageLimit = (pageLimit + 4).coerceAtMost(state.shops.size)
+                            }
+                        }
+                }
+
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    state.shops.forEachIndexed { index, shop ->
+                    pagedShops.forEachIndexed { index, shop ->
                         item(key = shop.id) {
                             ShopCard(
                                 shop = shop,
+                                actionButtonText = if (serviceIds.isNotEmpty()) "Select & Book" else "View",
                                 onViewShop = { onNavigateToShop(shop.id) }
                             )
                         }
@@ -229,7 +256,25 @@ fun DiscoveryScreen(
                             }
                         }
                     }
+
+                    if (pageLimit < state.shops.size) {
+                        item(key = "discovery_pagination_footer") {
+                            Column(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                GroomoraOutlinedButton(
+                                    text = "Load More Salons (${pagedShops.size}/${state.shops.size})",
+                                    onClick = {
+                                        pageLimit = (pageLimit + 4).coerceAtMost(state.shops.size)
+                                    },
+                                    height = 38.dp
+                                )
+                            }
+                        }
+                    }
                 }
+
 
             }
         }

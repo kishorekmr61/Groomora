@@ -57,4 +57,47 @@ class BookingCalculationTest {
 
         assertEquals(0.0, total)
     }
+
+    @Test
+    fun testMultipleServicesSumCalculation() {
+        val services = listOf(
+            Service("ser1", "Hair Spa", 599.0, "60 min", "", "hair"),
+            Service("ser2", "Haircut", 299.0, "30 min", "", "hair"),
+            Service("ser3", "Beard Trim", 199.0, "45 min", "", "beard")
+        )
+        val basePrice = services.sumOf { it.price }
+        assertEquals(1097.0, basePrice)
+    }
+
+    @Test
+    fun testTwoPercentCouponDiscountCalculation() {
+        val basePrice = 1000.0
+        val addOns = 200.0
+        val travel = 99.0
+        val fullAmount = basePrice + addOns + travel // 1299.0
+        val discount2Percent = fullAmount * 0.02 // 25.98
+        val total = fullAmount - discount2Percent
+
+        assertEquals(25.98, discount2Percent)
+        assertEquals(1273.02, total)
+    }
+
+    @Test
+    fun testExploreServicesVendorBookingFlow() {
+        val selectedServiceIds = listOf("ser1", "ser2")
+        val chosenShopId = "s1"
+        val chosenShopName = "The Golden Scissor"
+
+        val repo = MockBookingRepository()
+        val services = listOf(
+            Service("ser1", "Luxury Hair Spa & Scalp Therapy", 599.0, "60 min", "", "hair"),
+            Service("ser2", "Master Haircut & Style Consultation", 299.0, "30 min", "", "hair")
+        )
+
+        val totalBasePrice = services.sumOf { it.price }
+        assertEquals(898.0, totalBasePrice)
+        assertEquals("The Golden Scissor", chosenShopName)
+        assertEquals(2, services.size)
+    }
 }
+

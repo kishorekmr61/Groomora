@@ -10,13 +10,77 @@ import kotlinx.coroutines.flow.flow
 
 class MockBookingRepository : BookingRepository {
     private val mockServices = listOf(
-        Service("ser1", "Classic Haircut", 450.0, "45 min", "A precision cut tailored to your style.", "hair"),
-        Service("ser2", "Beard Trim & Shape", 250.0, "30 min", "Professional grooming for your beard.", "beard"),
-        Service("ser3", "Express Facial & Glow", 699.0, "40 min", "Deep cleansing and brightening facial.", "skin"),
-        Service("ser4", "Bridal Glow Deluxe", 2999.0, "120 min", "Full pre-bridal session.", "bridal")
+        Service("ser1", "Luxury Hair Spa & Scalp Therapy", 599.0, "60 min", "Deep conditioning & scalp massage", "hair"),
+        Service("ser2", "Master Haircut & Style Consultation", 299.0, "30 min", "Master cut, wash & blow dry", "hair"),
+        Service("ser3", "Royal Beard Trim & Hot Towel Shape", 199.0, "25 min", "Razor sharp beard detailing", "beard"),
+        Service("ser4", "Face Clean Up & Charcoal Detan", 499.0, "40 min", "Instant brightening & pore cleanse", "skin"),
+        Service("ser5", "Full Body Swedish Massage", 1499.0, "60 min", "Aromatherapy relaxation with soothing warm essential oils", "spa"),
+        Service("ser6", "Gel Nail Art & Polish Extension", 699.0, "45 min", "Long-lasting UV gel finish with custom nail art", "nails"),
+        Service("ser7", "Hydrating Diamond Facial", 899.0, "50 min", "Cellular glow treatment with natural diamond dust mask", "skin"),
+        Service("ser8", "Bridal Glow Pre-Wedding Ritual", 2499.0, "120 min", "Full body polish, organic facial & hair conditioning", "bridal"),
+        Service("ser9", "Doorstep At-Home Haircut & Grooming", 399.0, "45 min", "Certified barber visits your home with sanitized toolkit", "home")
     )
 
     private val mockPackages = listOf(
+        // Bridal Packages
+        ServicePackage(
+            id = "br1",
+            name = "Royal Bridal Radiance",
+            description = "Complete bridal makeover including HD makeup, luxury hairstyling, and saree/lehenga draping.",
+            price = 15000.0,
+            originalPrice = 20000.0,
+            services = listOf("HD Makeup", "Luxury Hairstyling", "Saree Draping", "Skin Prep")
+        ),
+        ServicePackage(
+            id = "br2",
+            name = "Engagement Glow",
+            description = "Sophisticated look for your engagement ceremony. Includes makeup and hairstyling.",
+            price = 8000.0,
+            originalPrice = 11000.0,
+            services = listOf("Engagement Makeup", "Hairstyling", "Draping")
+        ),
+        ServicePackage(
+            id = "br3",
+            name = "Bridal Party Package",
+            description = "Package for bridesmaids and family. Minimalist yet elegant makeup and hair.",
+            price = 3500.0,
+            originalPrice = 5000.0,
+            services = listOf("Party Makeup", "Simple Hairstyling")
+        ),
+        // Home Service Best-Seller Packages
+        ServicePackage(
+            id = "pkg_home_glow",
+            name = "Complete Glow Ritual",
+            description = "Brightening Vitamin C Facial, Waxing, Threading & Scalp Massage",
+            price = 1299.0,
+            originalPrice = 1899.0,
+            services = listOf("Vitamin C Facial", "Honey Waxing", "Threading", "Scalp Massage")
+        ),
+        ServicePackage(
+            id = "pkg_home_spa",
+            name = "Aromatherapy Stress Relief",
+            description = "Lavender Essential Oil Full Body Massage, Foot Reflexology & Hot Towel Therapy",
+            price = 1499.0,
+            originalPrice = 2199.0,
+            services = listOf("Essential Oil Massage", "Foot Reflexology", "Hot Towel Therapy")
+        ),
+        ServicePackage(
+            id = "pkg_home_mens",
+            name = "Men's Executive Grooming",
+            description = "Signature Haircut, Precision Beard Trim, Charcoal Detan & Head Massage",
+            price = 799.0,
+            originalPrice = 1199.0,
+            services = listOf("Signature Haircut", "Beard Trim & Shave", "Charcoal Detan", "Head Massage")
+        ),
+        ServicePackage(
+            id = "pkg_home_manipedi",
+            name = "Rose Deluxe Mani-Pedi Duo",
+            description = "Organic Rose Petal Foot Soak, Scrub, Cuticle Care & Gel Polish",
+            price = 699.0,
+            originalPrice = 999.0,
+            services = listOf("Rose Petal Soak", "Callus Removal", "Cuticle Oil", "Gel Polish")
+        ),
+        // Shop Details Packages
         ServicePackage(
             id = "pkg1",
             name = "Groom's Classic Grooming Combo",
@@ -92,14 +156,39 @@ class MockBookingRepository : BookingRepository {
     )
 
     override fun getService(serviceId: String): Flow<Service?> = flow {
-        delay(200)
-        emit(mockServices.find { it.id == serviceId })
+        delay(150)
+        val found = mockServices.find { it.id == serviceId } ?: Service(
+            id = serviceId,
+            name = "Custom Salon Service",
+            price = 499.0,
+            duration = "45 min",
+            description = "Professional grooming treatment",
+            category = "hair"
+        )
+        emit(found)
     }
 
     override fun getPackage(packageId: String): Flow<ServicePackage?> = flow {
-        delay(200)
-        emit(mockPackages.find { it.id == packageId })
+        delay(150)
+        val found = mockPackages.find { it.id == packageId } ?: ServicePackage(
+            id = packageId,
+            name = when {
+                packageId.contains("bridal", ignoreCase = true) || packageId.startsWith("br") -> "Royal Bridal Package"
+                packageId.contains("home", ignoreCase = true) || packageId.startsWith("hp") -> "Luxury Doorstep Spa Package"
+                else -> "Grooming Deluxe Package"
+            },
+            description = "All-inclusive premium grooming package",
+            price = when {
+                packageId.startsWith("br") -> 8000.0
+                packageId.startsWith("hp") || packageId.startsWith("pkg_home") -> 1299.0
+                else -> 999.0
+            },
+            originalPrice = 1499.0,
+            services = listOf("Premium Styling", "Detan Cleanup", "Relaxing Massage")
+        )
+        emit(found)
     }
+
 
     override fun getAvailability(shopId: String, professionalId: String?): Flow<List<BookingAvailability>> = flow {
         delay(300)

@@ -113,7 +113,7 @@ fun LoginScreen(
                 textAlign = TextAlign.Center
             )
             GroomoraCaption(
-                text = "Book Your Style • Salon & Home Services",
+                text = "Your Style. Your Way.",
                 textAlign = TextAlign.Center
             )
 

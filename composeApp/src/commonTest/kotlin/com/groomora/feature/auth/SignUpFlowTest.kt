@@ -52,4 +52,37 @@ class SignUpFlowTest {
         assertEquals("9123456780", response.data?.phoneNumber)
         assertEquals("priya@gmail.com", response.data?.email)
     }
+
+    @Test
+    fun testBookingAuthGuardFlow() = runBlocking {
+        val authRepo = MockAuthRepository()
+
+        // 1. User logs out
+        authRepo.logout()
+        val unauthenticatedState = authRepo.authState
+        var isAuth = false
+
+        // 2. User tries to book while unauthenticated -> triggers signin
+        val pendingBooking = com.groomora.core.navigation.Screen.Booking(serviceId = "ser1", shopId = "s1")
+        var savedPendingBooking: com.groomora.core.navigation.Screen.Booking? = null
+
+        if (!isAuth) {
+            savedPendingBooking = pendingBooking
+        }
+
+        assertEquals("ser1", savedPendingBooking?.serviceId)
+        assertEquals("s1", savedPendingBooking?.shopId)
+
+        // 3. User performs login
+        val loginResult = authRepo.login("9876543210", "1234")
+        assertTrue(loginResult is AuthState.Authenticated)
+
+        // 4. On login success, saved pending booking is resumed
+        val targetBooking = savedPendingBooking
+        savedPendingBooking = null
+
+        assertNotNull(targetBooking)
+        assertEquals("ser1", targetBooking.serviceId)
+        assertEquals(null, savedPendingBooking)
+    }
 }

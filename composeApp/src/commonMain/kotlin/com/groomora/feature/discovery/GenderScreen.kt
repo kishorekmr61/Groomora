@@ -284,15 +284,11 @@ fun GenderServicesScreen(
         topBar = {
             GroomoraTopAppBar(
                 title = if (isWomen) "Women Services" else "Men Services",
-                onBack = onBack,
-                actions = {
-                    IconButton(onClick = { /* Filter */ }) {
-                        Icon(Icons.Default.Menu, contentDescription = "Filter", tint = AppText)
-                    }
-                }
+                onBack = onBack
             )
         }
-    ) { padding ->
+    )
+ { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()

@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.groomora.app.DependencyContainer
 import com.groomora.design.Champagne
 import com.groomora.design.Charcoal
@@ -42,6 +43,7 @@ fun CartScreen(
     var selectedPaymentMethod by remember { mutableStateOf("UPI (Google Pay / PhonePe)") }
     var deliveryAddress by remember { mutableStateOf("221B Baker Street, Flat 4A, Bangalore - 560001") }
     var isPlacingOrder by remember { mutableStateOf(false) }
+    var placedOrder by remember { mutableStateOf<Order?>(null) }
 
     Scaffold(
         topBar = {
@@ -60,7 +62,7 @@ fun CartScreen(
             )
         },
         bottomBar = {
-            if (cartProducts.isNotEmpty()) {
+            if (cartProducts.isNotEmpty() && placedOrder == null) {
                 Surface(shadowElevation = 8.dp, color = Color.White) {
                     Row(
                         modifier = Modifier
@@ -85,7 +87,98 @@ fun CartScreen(
             }
         }
     ) { padding ->
-        if (cartProducts.isEmpty()) {
+        if (placedOrder != null) {
+            val order = placedOrder!!
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(WarmIvory)
+                    .padding(padding)
+                    .padding(20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                    shape = MaterialTheme.shapes.large
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .background(Color(0xFF2E7D5B), androidx.compose.foundation.shape.CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack, // Or checkmark
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(0.dp) // dummy for layout
+                            )
+                            Text("✓", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Text("Order Placed Successfully!", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Charcoal)
+                        Text(
+                            "Thank you for shopping with Groomora. Your order has been placed and is being prepared.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+
+                        Surface(
+                            color = WarmIvory,
+                            shape = MaterialTheme.shapes.medium,
+                            border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Order ID", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                                    Text(order.id, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Charcoal)
+                                }
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Total Paid", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                                    Text("₹${order.totalAmount.toInt()}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = Color(0xFFC5A059))
+                                }
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Payment", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                                    Text(order.paymentMethod, style = MaterialTheme.typography.labelMedium, color = Charcoal)
+                                }
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Items", style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+                                    Text("${order.items.sumOf { it.quantity }} item(s)", style = MaterialTheme.typography.labelMedium, color = Charcoal)
+                                }
+                            }
+                        }
+
+                        Spacer(Modifier.height(8.dp))
+
+                        Button(
+                            onClick = onNavigateToOrders,
+                            colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne),
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("View in My Orders", modifier = Modifier.padding(vertical = 4.dp))
+                        }
+
+                        OutlinedButton(
+                            onClick = onBack,
+                            shape = MaterialTheme.shapes.medium,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Continue Shopping", color = Charcoal)
+                        }
+                    }
+                }
+            }
+        } else if (cartProducts.isEmpty()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -221,7 +314,7 @@ fun CartScreen(
                             val items = cartProducts.map { p ->
                                 OrderItem(productId = p.id, productName = p.name, quantity = state.cartItems[p.id] ?: 1, price = p.price)
                             }
-                            DependencyContainer.orderRepository.placeOrder(
+                            val order = DependencyContainer.orderRepository.placeOrder(
                                 items = items,
                                 totalAmount = totalAmount,
                                 address = deliveryAddress,
@@ -230,7 +323,7 @@ fun CartScreen(
                             viewModel.onIntent(ProductIntent.ClearCart)
                             isPlacingOrder = false
                             showCheckoutDialog = false
-                            onNavigateToOrders()
+                            placedOrder = order
                         }
                     },
                     enabled = !isPlacingOrder,
@@ -239,7 +332,7 @@ fun CartScreen(
                     if (isPlacingOrder) {
                         CircularProgressIndicator(modifier = Modifier.size(18.dp), color = Champagne)
                     } else {
-                        Text("Place Order")
+                        Text("Place Order & Pay")
                     }
                 }
             },

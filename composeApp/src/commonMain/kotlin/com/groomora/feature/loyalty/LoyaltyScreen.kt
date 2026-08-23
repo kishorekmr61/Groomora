@@ -22,10 +22,17 @@ import com.groomora.design.ads.GroomoraRewardedAdCard
 import com.groomora.app.DependencyContainer
 
 
+import com.groomora.design.components.GroomoraBottomNav
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoyaltyScreen(
     viewModel: LoyaltyViewModel,
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToBookings: () -> Unit = {},
+    onNavigateToOffers: () -> Unit = {},
+    onNavigateToWallet: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -45,8 +52,19 @@ fun LoyaltyScreen(
                     navigationIconContentColor = Champagne
                 )
             )
+        },
+        bottomBar = {
+            GroomoraBottomNav(
+                currentRoute = "wallet",
+                onHomeClick = onNavigateToHome,
+                onBookingsClick = onNavigateToBookings,
+                onOffersClick = onNavigateToOffers,
+                onWalletClick = onNavigateToWallet,
+                onProfileClick = onNavigateToProfile
+            )
         }
-    ) { padding ->
+    )
+ { padding ->
         if (state.isLoading) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = Charcoal)

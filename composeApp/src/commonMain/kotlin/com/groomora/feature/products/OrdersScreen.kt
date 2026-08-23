@@ -27,8 +27,6 @@ fun OrdersScreen(
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
-    var cancellingOrderId by remember { mutableStateOf<String?>(null) }
-    var cancelReason by remember { mutableStateOf("Found better price elsewhere") }
 
     LaunchedEffect(Unit) {
         DependencyContainer.analyticsManager.logScreenView("orders_screen")
@@ -77,45 +75,17 @@ fun OrdersScreen(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(state.orders) { order ->
-                        OrderCard(
-                            order = order,
-                            onCancelOrder = { cancellingOrderId = order.id }
-                        )
+                        OrderCard(order = order)
                     }
                 }
             }
-        }
-    }
-
-    // Reusable GroomoraConfirmationDialog for Order Cancellation
-    if (cancellingOrderId != null) {
-        val orderId = cancellingOrderId!!
-        GroomoraConfirmationDialog(
-            title = "Cancel Order $orderId",
-            onDismissRequest = { cancellingOrderId = null },
-            onConfirm = {
-                viewModel.onIntent(OrdersIntent.CancelOrder(orderId, cancelReason))
-                cancellingOrderId = null
-            },
-            confirmButtonText = "Confirm Cancel",
-            dismissButtonText = "Keep Order",
-            isDestructive = true,
-            message = "Are you sure you want to cancel this order? A 100% refund will be processed back to your payment account."
-        ) {
-            Spacer(Modifier.height(8.dp))
-            GroomoraOutlinedTextField(
-                value = cancelReason,
-                onValueChange = { cancelReason = it },
-                label = "Reason for Cancellation"
-            )
         }
     }
 }
 
 @Composable
 fun OrderCard(
-    order: Order,
-    onCancelOrder: () -> Unit
+    order: Order
 ) {
     GroomoraCard(
         modifier = Modifier.fillMaxWidth(),
@@ -158,48 +128,19 @@ fun OrderCard(
                 }
             }
 
-            // Refund Info if Cancelled
-            if (order.status == OrderStatus.CANCELLED || order.status == OrderStatus.REFUNDED) {
-                Surface(
-                    color = Color(0xFFFFF3CD),
-                    shape = MaterialTheme.shapes.small,
-                    border = BorderStroke(1.dp, Color(0xFFFFEEBA))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(10.dp).fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = Color(0xFF856404), modifier = Modifier.size(16.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Column {
-                            GroomoraCaption(
-                                text = "Refund: ${if (order.refundStatus == OrderRefundStatus.REFUNDED) "Credited (₹${order.totalAmount.toInt()})" else "Processing (1-2 business days)"}",
-                                fontWeight = FontWeight.Bold,
-                                color = Color(0xFF856404)
-                            )
-                            if (order.cancellationReason != null) {
-                                GroomoraCaption(
-                                    text = "Reason: ${order.cancellationReason}",
-                                    color = Color(0xFF856404)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (order.status == OrderStatus.SHIPPED || order.status == OrderStatus.DELIVERED) {
+            // Courier Tracking (Only shown if courier number is provided)
+            if (!order.trackingNumber.isNullOrBlank()) {
                 HorizontalDivider(color = BorderGray)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.LocationOn,
-                        contentDescription = null,
+                        contentDescription = "Courier Tracking",
                         modifier = Modifier.size(16.dp),
                         tint = TealGreen
                     )
                     Spacer(Modifier.width(6.dp))
                     GroomoraCaption(
-                        text = "Courier Track: ${order.trackingNumber ?: "In Transit"}",
+                        text = "Courier Track: ${order.trackingNumber}",
                         color = TealGreen,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -215,17 +156,6 @@ fun OrderCard(
                 Column {
                     GroomoraCaption(text = "Total Paid")
                     GroomoraPriceText(amount = order.totalAmount)
-                }
-
-                if (order.canCancel && order.status == OrderStatus.PLACED) {
-                    OutlinedButton(
-                        onClick = onCancelOrder,
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorRed),
-                        border = BorderStroke(1.dp, ErrorRed),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Text("Cancel Order", style = MaterialTheme.typography.labelMedium)
-                    }
                 }
             }
         }

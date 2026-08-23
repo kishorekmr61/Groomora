@@ -65,8 +65,8 @@ class MockOrderRepository : OrderRepository {
             date = "Today",
             deliveryAddress = address,
             paymentMethod = paymentMethod,
-            trackingNumber = "GRM${(100000..999999).random()}",
-            canCancel = true
+            trackingNumber = null, // Courier tracking number not assigned yet
+            canCancel = false
         )
         _orders.value = listOf(newOrder) + _orders.value
         return newOrder

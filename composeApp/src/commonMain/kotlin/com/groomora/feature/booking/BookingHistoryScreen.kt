@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
@@ -20,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import com.groomora.app.DependencyContainer
 import com.groomora.design.*
 import com.groomora.design.components.*
+import kotlinx.coroutines.delay
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +30,10 @@ fun BookingHistoryScreen(
     viewModel: BookingHistoryViewModel,
     onNavigateToReview: (String) -> Unit,
     onNavigateToRebook: (String) -> Unit,
+    onNavigateToHome: () -> Unit = {},
+    onNavigateToOffers: () -> Unit = {},
+    onNavigateToWallet: () -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -52,8 +59,19 @@ fun BookingHistoryScreen(
                 title = "My Bookings",
                 onBack = onBack
             )
+        },
+        bottomBar = {
+            GroomoraBottomNav(
+                currentRoute = "bookings",
+                onHomeClick = onNavigateToHome,
+                onBookingsClick = {},
+                onOffersClick = onNavigateToOffers,
+                onWalletClick = onNavigateToWallet,
+                onProfileClick = onNavigateToProfile
+            )
         }
-    ) { padding ->
+    )
+ { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -125,11 +143,27 @@ fun BookingHistoryScreen(
                     )
 
                 } else {
+                    var pageLimit by remember(selectedTab) { mutableIntStateOf(5) }
+                    val pagedBookings = currentList.take(pageLimit)
+                    val listState = rememberLazyListState()
+
+                    LaunchedEffect(listState, currentList.size, pageLimit) {
+                        snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index }
+                            .collect { lastIdx ->
+                                if (lastIdx != null && lastIdx >= pagedBookings.size - 1 && pageLimit < currentList.size) {
+                                    delay(200)
+                                    pageLimit = (pageLimit + 5).coerceAtMost(currentList.size)
+                                }
+                            }
+                    }
+
                     LazyColumn(
+                        state = listState,
                         contentPadding = PaddingValues(16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        items(currentList) { booking ->
+
+                        items(pagedBookings) { booking ->
                             BookingHistoryCard(
                                 booking = booking,
                                 onReschedule = { viewModel.onIntent(BookingHistoryIntent.InitiateReschedule(booking.id)) },
@@ -138,11 +172,29 @@ fun BookingHistoryScreen(
                                 onRebook = { onNavigateToRebook("ser1") }
                             )
                         }
+
+                        if (pageLimit < currentList.size) {
+                            item {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    GroomoraOutlinedButton(
+                                        text = "Load More Bookings (${pagedBookings.size}/${currentList.size})",
+                                        onClick = {
+                                            pageLimit = (pageLimit + 5).coerceAtMost(currentList.size)
+                                        },
+                                        height = 38.dp
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
     }
+
 
     // Reusable GroomoraConfirmationDialog for Reschedule
     if (state.reschedulingBookingId != null) {
@@ -294,45 +346,45 @@ fun BookingHistoryCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(verticalArrangement = Arrangement.Center) {
                     GroomoraCaption(text = "Total Paid")
+                    Spacer(Modifier.height(2.dp))
                     GroomoraPriceText(amount = booking.totalAmount)
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     if (booking.canReschedule) {
                         GroomoraOutlinedButton(
                             text = "Reschedule",
                             onClick = onReschedule,
-                            height = 36.dp
+                            height = 38.dp
                         )
                     }
                     if (booking.canCancel) {
-                        OutlinedButton(
+                        GroomoraOutlinedButton(
+                            text = "Cancel",
                             onClick = onCancel,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = ErrorRed),
-                            border = BorderStroke(1.dp, ErrorRed)
-                        ) {
-                            Text("Cancel", style = MaterialTheme.typography.labelMedium)
-                        }
+                            borderColor = ErrorRed,
+                            contentColor = ErrorRed,
+                            height = 38.dp
+                        )
                     }
                     if (booking.canReview) {
-                        Button(
+                        GroomoraPrimaryButton(
+                            text = "Review",
+                            icon = Icons.Default.Star,
                             onClick = onReview,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = HoneyAmber, contentColor = Color.White)
-                        ) {
-                            Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(14.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("Review", style = MaterialTheme.typography.labelMedium)
-                        }
+                            height = 38.dp
+                        )
                     }
                     if (booking.canRebook) {
                         GroomoraPrimaryButton(
                             text = "Rebook",
                             onClick = onRebook,
-                            height = 36.dp
+                            height = 38.dp
                         )
                     }
                 }
@@ -340,6 +392,7 @@ fun BookingHistoryCard(
         }
     }
 }
+
 
 @Composable
 fun BookingStatusBadge(status: BookingStatus) {

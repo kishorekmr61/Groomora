@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.groomora.design.*
 import com.groomora.design.components.*
 import com.groomora.feature.discovery.Professional
+import kotlinx.coroutines.launch
 
 @Composable
 fun ShopDetailsScreen(
@@ -33,6 +34,12 @@ fun ShopDetailsScreen(
     val state by viewModel.state.collectAsState()
     var selectedTab by remember { mutableStateOf("Overview") }
     var isSaved by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    var showCallDialog by remember { mutableStateOf(false) }
+    var showDirectionDialog by remember { mutableStateOf(false) }
+    var showShareDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(shopId) {
         com.groomora.app.DependencyContainer.analyticsManager.logScreenView("shop_details_screen")
@@ -40,14 +47,133 @@ fun ShopDetailsScreen(
         viewModel.onIntent(ShopDetailsIntent.LoadDetails(shopId))
     }
 
+    val shopName = state.shop?.name ?: "King's Barber Studio"
+    val shopPhone = "+91 98450 12345"
+    val shopAddress = state.shop?.address?.takeIf { it.isNotBlank() } ?: "45 Downtown Ave, 5th Block, Koramangala, Bengaluru"
+    val shopDistance = state.shop?.distance ?: "0.8 km"
+
+    // Call Dialog
+    if (showCallDialog) {
+        AlertDialog(
+            onDismissRequest = { showCallDialog = false },
+            icon = { Icon(Icons.Default.Phone, contentDescription = "Phone icon", tint = HoneyAmber, modifier = Modifier.size(32.dp)) },
+            title = { Text("Call $shopName", fontWeight = FontWeight.Bold) },
+            text = {
+                Column {
+                    Text("Would you like to dial the salon directly?")
+                    Spacer(Modifier.height(8.dp))
+                    Text(shopPhone, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Charcoal)
+                    Text("Available today: 09:00 AM - 09:00 PM", style = MaterialTheme.typography.labelSmall, color = MutedText)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showCallDialog = false
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Calling $shopPhone...")
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne)
+                ) {
+                    Text("Call Now")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCallDialog = false }) {
+                    Text("Cancel", color = MutedText)
+                }
+            }
+        )
+    }
+
+    // Direction / Location Dialog
+    if (showDirectionDialog) {
+        AlertDialog(
+            onDismissRequest = { showDirectionDialog = false },
+            icon = { Icon(Icons.Default.Place, contentDescription = "Location pin icon", tint = Color(0xFFE53935), modifier = Modifier.size(32.dp)) },
+            title = { Text("Location & Directions", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(shopName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                    Text(shopAddress, style = MaterialTheme.typography.bodyMedium, color = AppText)
+                    Text("Distance: $shopDistance from your current location", style = MaterialTheme.typography.labelMedium, color = HoneyAmber, fontWeight = FontWeight.SemiBold)
+                    Text("Landmark: Opposite Sony World Signal", style = MaterialTheme.typography.labelSmall, color = MutedText)
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDirectionDialog = false
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Opening directions to $shopName in Maps...")
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne)
+                ) {
+                    Text("Open in Maps")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDirectionDialog = false }) {
+                    Text("Close", color = MutedText)
+                }
+            }
+        )
+    }
+
+    // Share Dialog
+    if (showShareDialog) {
+        AlertDialog(
+            onDismissRequest = { showShareDialog = false },
+            icon = { Icon(Icons.Default.Share, contentDescription = "Share icon", tint = HoneyAmber, modifier = Modifier.size(32.dp)) },
+            title = { Text("Share Salon", fontWeight = FontWeight.Bold) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Share $shopName with your friends and family:")
+                    Surface(
+                        color = Color(0xFFF7F5F0),
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "https://groomora.app/shop/${shopId.ifBlank { "s1" }}",
+                            modifier = Modifier.padding(10.dp),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Charcoal
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showShareDialog = false
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Shop link copied to clipboard!")
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne)
+                ) {
+                    Text("Copy Link")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showShareDialog = false }) {
+                    Text("Cancel", color = MutedText)
+                }
+            }
+        )
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             GroomoraTopAppBar(
                 title = "Shop Details",
                 onBack = onBack,
                 actions = {
-                    IconButton(onClick = { /* Share */ }) {
+                    IconButton(onClick = { showShareDialog = true }) {
                         Icon(Icons.Default.Share, contentDescription = "Share", tint = AppText)
                     }
                 }
@@ -102,7 +228,7 @@ fun ShopDetailsScreen(
                 item {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = state.shop?.name ?: "King's Barber Studio",
+                            text = shopName,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold,
                             color = AppText
@@ -115,7 +241,7 @@ fun ShopDetailsScreen(
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                text = "• ${state.shop?.distance ?: "0.8 km"} • Koramangala",
+                                text = "• $shopDistance • Koramangala",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MutedText
                             )
@@ -136,26 +262,34 @@ fun ShopDetailsScreen(
                         GroomoraCircularActionButton(
                             label = "Call",
                             icon = Icons.Default.Phone,
-                            onClick = { /* Call */ }
+                            onClick = { showCallDialog = true }
                         )
                         GroomoraCircularActionButton(
                             label = "Direction",
                             icon = Icons.Default.Place,
-                            onClick = { /* Direction */ }
+                            onClick = { showDirectionDialog = true }
                         )
                         GroomoraCircularActionButton(
                             label = "Share",
                             icon = Icons.Default.Share,
-                            onClick = { /* Share */ }
+                            onClick = { showShareDialog = true }
                         )
                         GroomoraCircularActionButton(
                             label = if (isSaved) "Saved" else "Save",
                             icon = if (isSaved) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             iconColor = if (isSaved) ErrorRed else AppText,
-                            onClick = { isSaved = !isSaved }
+                            onClick = {
+                                isSaved = !isSaved
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        if (isSaved) "Saved to your favorites!" else "Removed from favorites"
+                                    )
+                                }
+                            }
                         )
                     }
                 }
+
 
                 // 4. Tabs Row (Overview, Services, Barbers, Gallery, Reviews)
                 item {
