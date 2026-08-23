@@ -74,7 +74,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.groomora.core.configuration.AppConfig
 import com.groomora.core.configuration.UpdateStatus
-import com.groomora.core.network.NetworkOfflineBanner
 import com.groomora.core.network.NoInternetScreen
 import com.groomora.feature.maintenance.MaintenanceScreen
 import com.groomora.feature.update.FlexibleUpdateBottomSheet
@@ -122,8 +121,6 @@ fun App() {
         }
 
         Column(modifier = Modifier.fillMaxSize()) {
-            NetworkOfflineBanner(isConnected = isNetworkConnected)
-
             when {
                 !isNetworkConnected -> {
                     NoInternetScreen(

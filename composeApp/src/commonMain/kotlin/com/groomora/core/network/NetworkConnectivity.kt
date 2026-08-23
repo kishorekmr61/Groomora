@@ -138,7 +138,7 @@ fun NoInternetScreen(
 
                 // Subtitle Message
                 GroomoraBody(
-                    text = "Groomora needs an active internet connection to load live salon slots, verified stylists, and confirm your bookings.",
+                    text = "It looks like you're offline. Check your connection and try again.",
                     color = MutedText,
                     textAlign = TextAlign.Center
                 )
