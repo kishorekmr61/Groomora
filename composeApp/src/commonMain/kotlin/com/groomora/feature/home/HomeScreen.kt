@@ -32,6 +32,8 @@ import com.groomora.design.ads.GroomoraAdBanner
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.semantics.Role
+import androidx.compose.animation.core.*
+import androidx.compose.ui.graphics.graphicsLayer
 import com.groomora.feature.discovery.Shop
 import kotlinx.coroutines.launch
 
@@ -121,22 +123,42 @@ fun HomeScreen(
                             color = MutedText
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            val locationText = remember(state.location) {
-                                val address = state.location?.address
-                                if (address != null) {
-                                    val city = address.city
-                                    val area = address.label ?: address.fullAddress.split(",").firstOrNull()?.trim() ?: city
-                                    "$area, $city"
-                                } else {
-                                    "Locating..."
+                            if (state.location == null) {
+                                val infiniteTransition = rememberInfiniteTransition(label = "locationPulse")
+                                val alpha by infiniteTransition.animateFloat(
+                                    initialValue = 0.3f,
+                                    targetValue = 0.7f,
+                                    animationSpec = infiniteRepeatable(
+                                        animation = tween(800, easing = LinearEasing),
+                                        repeatMode = RepeatMode.Reverse
+                                    ),
+                                    label = "pulseAlpha"
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .width(120.dp)
+                                        .height(18.dp)
+                                        .graphicsLayer(alpha = alpha)
+                                        .background(Color.LightGray, RoundedCornerShape(4.dp))
+                                )
+                            } else {
+                                val locationText = remember(state.location) {
+                                    val address = state.location?.address
+                                    if (address != null) {
+                                        val city = address.city
+                                        val area = address.label ?: address.fullAddress.split(",").firstOrNull()?.trim() ?: city
+                                        "$area, $city"
+                                    } else {
+                                        "Locating..."
+                                    }
                                 }
+                                Text(
+                                    text = locationText,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = AppText
+                                )
                             }
-                            Text(
-                                text = locationText,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = AppText
-                            )
                             Spacer(Modifier.width(4.dp))
                             Icon(
                                 Icons.Default.KeyboardArrowDown,

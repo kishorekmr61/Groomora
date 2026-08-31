@@ -26,6 +26,9 @@ import com.groomora.feature.offers.OffersScreen
 import com.groomora.feature.offers.OffersViewModel
 import com.groomora.feature.loyalty.LoyaltyScreen
 import com.groomora.feature.loyalty.LoyaltyViewModel
+import com.groomora.feature.loyalty.PaymentScreen
+import com.groomora.feature.loyalty.PaymentSuccessScreen
+import com.groomora.feature.products.ProductCheckoutScreen
 import com.groomora.feature.profile.ProfileScreen
 import com.groomora.feature.profile.ProfileViewModel
 import com.groomora.feature.profile.EditProfileScreen
@@ -448,6 +451,49 @@ fun App() {
                     onNavigateToOffers = { navController.navigate(Screen.Offers) },
                     onNavigateToWallet = {},
                     onNavigateToProfile = { navController.navigate(Screen.Profile) },
+                    onNavigateToPayment = { planId, price ->
+                        navController.navigate(Screen.Payment(planId, price))
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable<Screen.Payment> { backStackEntry ->
+                val route = backStackEntry.toRoute<Screen.Payment>()
+                PaymentScreen(
+                    planId = route.planId,
+                    amount = route.amount,
+                    address = route.address,
+                    onPaymentComplete = {
+                        navController.navigate(Screen.PaymentSuccess) {
+                            popUpTo(Screen.Home) { inclusive = false }
+                        }
+                    },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable<Screen.PaymentSuccess> {
+                PaymentSuccessScreen(
+                    onDone = {
+                        navController.navigate(Screen.Home) {
+                            popUpTo(Screen.Home) { inclusive = true }
+                        }
+                    }
+                )
+            }
+            composable<Screen.ProductCheckout> {
+                val productViewModel: ProductViewModel = viewModel {
+                    ProductViewModel(
+                        productRepository = DependencyContainer.productRepository
+                    )
+                }
+                ProductCheckoutScreen(
+                    viewModel = productViewModel,
+                    onNavigateToPayment = { amount, address ->
+                        navController.navigate(Screen.Payment(planId = "Product Order", amount = amount, address = address))
+                    },
+                    onAddNewAddress = {
+                        navController.navigate(Screen.AddressManagement)
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }
@@ -560,7 +606,7 @@ fun App() {
                 }
                 CartScreen(
                     viewModel = productViewModel,
-                    onNavigateToOrders = { navController.navigate(Screen.Orders) },
+                    onNavigateToCheckout = { navController.navigate(Screen.ProductCheckout) },
                     onBack = { navController.popBackStack() }
                 )
             }

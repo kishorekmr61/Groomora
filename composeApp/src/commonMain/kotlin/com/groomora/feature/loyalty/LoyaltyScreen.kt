@@ -33,6 +33,7 @@ fun LoyaltyScreen(
     onNavigateToOffers: () -> Unit = {},
     onNavigateToWallet: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
+    onNavigateToPayment: (String, Double) -> Unit = { _, _ -> },
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -108,7 +109,7 @@ fun LoyaltyScreen(
                     Text("Membership Plans", style = MaterialTheme.typography.titleLarge)
                 }
                 items(state.membershipPlans) { plan ->
-                    MembershipPlanItem(plan)
+                    MembershipPlanItem(plan, onJoin = { onNavigateToPayment(plan.id, plan.price) })
                 }
 
                 item {
@@ -195,7 +196,7 @@ fun ReferralCard(code: String) {
 }
 
 @Composable
-fun MembershipPlanItem(plan: MembershipPlan) {
+fun MembershipPlanItem(plan: MembershipPlan, onJoin: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -216,7 +217,7 @@ fun MembershipPlanItem(plan: MembershipPlan) {
             }
             Spacer(Modifier.height(12.dp))
             OutlinedButton(
-                onClick = { /* Join */ },
+                onClick = onJoin,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Charcoal)
             ) {

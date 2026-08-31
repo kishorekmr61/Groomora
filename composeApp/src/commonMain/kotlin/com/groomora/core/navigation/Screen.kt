@@ -51,6 +51,15 @@ sealed interface Screen {
     data object Loyalty : Screen
 
     @Serializable
+    data object ProductCheckout : Screen
+
+    @Serializable
+    data class Payment(val planId: String, val amount: Double, val address: String? = null) : Screen
+
+    @Serializable
+    data object PaymentSuccess : Screen
+
+    @Serializable
     data object Products : Screen
 
     @Serializable
