@@ -54,7 +54,7 @@ sealed interface Screen {
     data object ProductCheckout : Screen
 
     @Serializable
-    data class Payment(val planId: String, val amount: Double, val address: String? = null) : Screen
+    data class Payment(val planId: String, val amount: Int, val address: String? = null) : Screen
 
     @Serializable
     data object PaymentSuccess : Screen

@@ -33,7 +33,7 @@ fun LoyaltyScreen(
     onNavigateToOffers: () -> Unit = {},
     onNavigateToWallet: () -> Unit = {},
     onNavigateToProfile: () -> Unit = {},
-    onNavigateToPayment: (String, Double) -> Unit = { _, _ -> },
+    onNavigateToPayment: (String, Int) -> Unit = { _, _ -> },
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -109,7 +109,7 @@ fun LoyaltyScreen(
                     Text("Membership Plans", style = MaterialTheme.typography.titleLarge)
                 }
                 items(state.membershipPlans) { plan ->
-                    MembershipPlanItem(plan, onJoin = { onNavigateToPayment(plan.id, plan.price) })
+                    MembershipPlanItem(plan, onJoin = { onNavigateToPayment(plan.id, plan.price.toInt()) })
                 }
 
                 item {

@@ -24,7 +24,7 @@ import com.groomora.design.components.GroomoraPrimaryButton
 @Composable
 fun PaymentScreen(
     planId: String,
-    amount: Double,
+    amount: Int,
     address: String? = null,
     onPaymentComplete: () -> Unit,
     onBack: () -> Unit
@@ -51,7 +51,7 @@ fun PaymentScreen(
         bottomBar = {
             Surface(shadowElevation = 8.dp) {
                 GroomoraPrimaryButton(
-                    text = "Pay ₹${amount.toInt()}",
+                    text = "Pay ₹$amount",
                     onClick = {
                         isProcessing = true
                         // In a real app, we would process payment and place order here
@@ -87,7 +87,7 @@ fun PaymentScreen(
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             val label = if (address != null) "Product Order" else "Membership Plan ($planId)"
                             Text(label, color = Color.Gray)
-                            Text("₹${amount.toInt()}", fontWeight = FontWeight.Bold)
+                            Text("₹$amount", fontWeight = FontWeight.Bold)
                         }
                         
                         if (address != null) {
@@ -105,7 +105,7 @@ fun PaymentScreen(
                         HorizontalDivider(Modifier.padding(vertical = 12.dp))
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("Total Payable", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                            Text("₹${amount.toInt()}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Charcoal)
+                            Text("₹$amount", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = Charcoal)
                         }
                     }
                 }

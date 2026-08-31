@@ -26,7 +26,7 @@ import com.groomora.design.components.GroomoraPrimaryButton
 @Composable
 fun ProductCheckoutScreen(
     viewModel: ProductViewModel,
-    onNavigateToPayment: (Double, String) -> Unit,
+    onNavigateToPayment: (Int, String) -> Unit,
     onAddNewAddress: () -> Unit,
     onBack: () -> Unit
 ) {
@@ -68,7 +68,7 @@ fun ProductCheckoutScreen(
                     enabled = selectedAddress != null,
                     onClick = {
                         selectedAddress?.let { addr ->
-                            onNavigateToPayment(totalAmount, addr.fullAddress)
+                            onNavigateToPayment(totalAmount.toInt(), addr.fullAddress)
                         }
                     },
                     modifier = Modifier
