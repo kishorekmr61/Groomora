@@ -5,36 +5,29 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-data class AnalyticsEvent(
-    val name: String,
-    val params: Map<String, String> = emptyMap(),
-    val timestamp: Long = 0L
-)
-
-interface AnalyticsManager {
-    fun logEvent(name: String, params: Map<String, String> = emptyMap())
-    fun logScreenView(screenName: String)
-    fun logFunnelStep(funnelName: String, stepNumber: Int, stepName: String)
-    val eventHistory: StateFlow<List<AnalyticsEvent>>
-}
-
-expect fun createAnalyticsManager(): AnalyticsManager
-
-class DefaultAnalyticsManager : AnalyticsManager {
+/**
+ * iOS implementation of AnalyticsManager.
+ * To enable real Firebase tracking on iOS:
+ * 1. Add FirebaseAnalytics pod to your Xcode project.
+ * 2. Bridge the calls below to FIRAnalytics.
+ */
+class IosAnalyticsManager : AnalyticsManager {
     private val _eventHistory = MutableStateFlow<List<AnalyticsEvent>>(emptyList())
     override val eventHistory: StateFlow<List<AnalyticsEvent>> = _eventHistory.asStateFlow()
 
     override fun logEvent(name: String, params: Map<String, String>) {
-        // Privacy filter: strip any PII/tokens before logging
         val safeParams = params.filterKeys { key ->
             !key.contains("password", ignoreCase = true) &&
             !key.contains("token", ignoreCase = true) &&
             !key.contains("otp", ignoreCase = true) &&
             !key.contains("card", ignoreCase = true)
         }
+        
+        // Mock logging for now to prevent build errors without CocoaPods
+        GroomoraLog.d("Analytics-iOS", "[MOCK] $name: $safeParams")
+        
         val event = AnalyticsEvent(name = name, params = safeParams, timestamp = 0L)
         _eventHistory.value = _eventHistory.value + event
-        GroomoraLog.d("Analytics", "$name: $safeParams")
     }
 
     override fun logScreenView(screenName: String) {
@@ -52,3 +45,5 @@ class DefaultAnalyticsManager : AnalyticsManager {
         )
     }
 }
+
+actual fun createAnalyticsManager(): AnalyticsManager = IosAnalyticsManager()

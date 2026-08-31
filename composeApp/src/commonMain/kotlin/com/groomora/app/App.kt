@@ -53,6 +53,7 @@ import com.groomora.feature.homeservice.HomeServiceScreen
 import com.groomora.feature.homeservice.HomeServiceViewModel
 import com.groomora.feature.services.ServicesCatalogScreen
 import com.groomora.feature.onboarding.OnboardingScreen
+import com.groomora.feature.onboarding.SplashScreen
 
 import com.groomora.feature.auth.LoginScreen
 import com.groomora.feature.auth.SignUpScreen
@@ -156,11 +157,20 @@ fun App() {
                 else -> {
                     NavHost(
                         navController = navController,
-                        startDestination = Screen.Home,
+                        startDestination = Screen.Splash,
                         modifier = Modifier.weight(1f)
                     ) {
 
 
+            composable<Screen.Splash> {
+                SplashScreen(
+                    onSplashFinished = {
+                        navController.navigate(Screen.Home) {
+                            popUpTo(Screen.Splash) { inclusive = true }
+                        }
+                    }
+                )
+            }
             composable<Screen.Onboarding> {
                 OnboardingScreen(
                     onFinish = {

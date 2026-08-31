@@ -121,8 +121,18 @@ fun HomeScreen(
                             color = MutedText
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            val locationText = remember(state.location) {
+                                val address = state.location?.address
+                                if (address != null) {
+                                    val city = address.city
+                                    val area = address.label ?: address.fullAddress.split(",").firstOrNull()?.trim() ?: city
+                                    "$area, $city"
+                                } else {
+                                    "Locating..."
+                                }
+                            }
                             Text(
-                                text = state.location?.address?.city?.let { "$it, Bengaluru" } ?: "Koramangala, Bengaluru",
+                                text = locationText,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = AppText

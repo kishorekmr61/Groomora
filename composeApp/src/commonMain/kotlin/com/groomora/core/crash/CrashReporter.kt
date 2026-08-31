@@ -1,5 +1,7 @@
 package com.groomora.core.crash
 
+import com.groomora.core.util.GroomoraLog
+
 /**
  * Multiplatform Crash Reporting contract ready for Firebase Crashlytics.
  */
@@ -11,6 +13,8 @@ interface CrashReporter {
     fun setCustomKey(key: String, value: String)
     fun getBreadcrumbs(): List<String>
 }
+
+expect fun createCrashReporter(): CrashReporter
 
 /**
  * Firebase Crashlytics-compatible Crash Reporter.
@@ -25,18 +29,17 @@ class FirebaseCrashReporter : CrashReporter {
 
     override fun recordException(throwable: Throwable, context: Map<String, String>) {
         val mergedContext = customKeys + context
-        println("[FirebaseCrashlytics] 🔴 FATAL / RECORDED EXCEPTION: ${throwable.message}")
-        println("[FirebaseCrashlytics] User ID: ${currentUserId ?: "Anonymous"}")
-        println("[FirebaseCrashlytics] Context Attributes: $mergedContext")
-        println("[FirebaseCrashlytics] Recent Breadcrumbs (${breadcrumbs.size}):")
-        breadcrumbs.takeLast(10).forEach { println("   └─ $it") }
-        throwable.printStackTrace()
+        GroomoraLog.e("FirebaseCrashlytics", "🔴 FATAL / RECORDED EXCEPTION: ${throwable.message}", throwable)
+        GroomoraLog.d("FirebaseCrashlytics", "User ID: ${currentUserId ?: "Anonymous"}")
+        GroomoraLog.d("FirebaseCrashlytics", "Context Attributes: $mergedContext")
+        GroomoraLog.d("FirebaseCrashlytics", "Recent Breadcrumbs (${breadcrumbs.size}):")
+        breadcrumbs.takeLast(10).forEach { GroomoraLog.d("FirebaseCrashlytics", "   └─ $it") }
     }
 
     override fun recordNonFatal(throwable: Throwable, context: Map<String, String>) {
         val mergedContext = customKeys + context
-        println("[FirebaseCrashlytics] ⚠️ NON-FATAL EXCEPTION: ${throwable.message}")
-        println("[FirebaseCrashlytics] User ID: ${currentUserId ?: "Anonymous"} | Context: $mergedContext")
+        GroomoraLog.d("FirebaseCrashlytics", "⚠️ NON-FATAL EXCEPTION: ${throwable.message}")
+        GroomoraLog.d("FirebaseCrashlytics", "User ID: ${currentUserId ?: "Anonymous"} | Context: $mergedContext")
     }
 
     override fun logBreadcrumb(message: String) {
@@ -46,18 +49,18 @@ class FirebaseCrashReporter : CrashReporter {
             }
             val entry = "[${currentTimeMillis()}] $message"
             breadcrumbs.add(entry)
-            println("[FirebaseCrashlytics] 🍞 Breadcrumb: $message")
+            GroomoraLog.d("FirebaseCrashlytics", "🍞 Breadcrumb: $message")
         }
     }
 
     override fun setUserId(userId: String) {
         currentUserId = userId
-        println("[FirebaseCrashlytics] 👤 User ID set: $userId")
+        GroomoraLog.d("FirebaseCrashlytics", "👤 User ID set: $userId")
     }
 
     override fun setCustomKey(key: String, value: String) {
         customKeys[key] = value
-        println("[FirebaseCrashlytics] 🏷️ Custom key set: $key = $value")
+        GroomoraLog.d("FirebaseCrashlytics", "🏷️ Custom key set: $key = $value")
     }
 
     override fun getBreadcrumbs(): List<String> {

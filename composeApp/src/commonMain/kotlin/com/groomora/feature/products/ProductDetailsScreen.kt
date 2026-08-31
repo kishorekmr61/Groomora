@@ -11,12 +11,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.groomora.design.Champagne
 import com.groomora.design.Charcoal
+import com.groomora.design.GroomoraImage
 import com.groomora.design.WarmIvory
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,6 +30,8 @@ fun ProductDetailsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val product = state.products.find { it.id == productId }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -44,11 +49,17 @@ fun ProductDetailsScreen(
                 )
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             product?.let {
                 Surface(shadowElevation = 8.dp) {
                     Button(
-                        onClick = { viewModel.onIntent(ProductIntent.AddToCart(it.id)) },
+                        onClick = { 
+                            viewModel.onIntent(ProductIntent.AddToCart(it.id))
+                            scope.launch {
+                                snackbarHostState.showSnackbar("Added to Cart")
+                            }
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)
@@ -96,15 +107,14 @@ fun ProductDetailsScreen(
 
 @Composable
 fun ProductImageHeader(product: Product) {
-    Box(
+    GroomoraImage(
+        url = product.imageUrl,
+        contentDescription = product.name,
         modifier = Modifier
             .fillMaxWidth()
-            .height(300.dp)
-            .background(Color.LightGray),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Product Image Gallery", color = Color.Gray)
-    }
+            .height(300.dp),
+        contentScale = ContentScale.Crop
+    )
 }
 
 @Composable

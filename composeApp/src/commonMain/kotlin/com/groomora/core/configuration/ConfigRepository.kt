@@ -10,3 +10,5 @@ interface ConfigRepository {
     fun setMaintenanceMode(enabled: Boolean, title: String? = null, message: String? = null, estimatedEnd: String? = null)
     fun setVersionGate(minVersion: String, latestVersion: String)
 }
+
+expect fun createConfigRepository(): ConfigRepository

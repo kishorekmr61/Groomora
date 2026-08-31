@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<defaultsMap>
+    <entry>
+        <key>app_config_json</key>
+        <value>{
+  "maintenance": { "isMaintenanceMode": false },
+  "appUpdate": { "minSupportedVersion": "0.1.0", "latestVersion": "0.1.0" },
+  "featureFlags": {
+    "enableBridal": true,
+    "enableHomeService": true,
+    "enableLoyalty": true,
+    "enableProducts": true,
+    "enableReviews": true
+  },
+  "screens": {
+    "Home": { "isEnabled": true, "displayName": "Home" },
+    "Discovery": { "isEnabled": true, "displayName": "Explore" },
+    "Services": { "isEnabled": true, "displayName": "Services" },
+    "ShopDetails": { "isEnabled": true, "displayName": "Shop Details" },
+    "ProfessionalProfile": { "isEnabled": true, "displayName": "Professional Profile" },
+    "Booking": { "isEnabled": true, "displayName": "Book Service" },
+    "Profile": { "isEnabled": true, "displayName": "My Profile" },
+    "EditProfile": { "isEnabled": true, "displayName": "Edit Profile" },
+    "Settings": { "isEnabled": true, "displayName": "Settings" },
+    "Favorites": { "isEnabled": true, "displayName": "Favorites" },
+    "Offers": { "isEnabled": true, "displayName": "Offers" },
+    "Loyalty": { "isEnabled": true, "displayName": "Loyalty" },
+    "Products": { "isEnabled": true, "displayName": "Store" },
+    "ProductDetails": { "isEnabled": true, "displayName": "Product Details" },
+    "Cart": { "isEnabled": true, "displayName": "Cart" },
+    "Bridal": { "isEnabled": true, "displayName": "Bridal Services" },
+    "Orders": { "isEnabled": true, "displayName": "My Orders" },
+    "Notifications": { "isEnabled": true, "displayName": "Notifications" },
+    "HomeService": { "isEnabled": true, "displayName": "Home Service" },
+    "Reviews": { "isEnabled": true, "displayName": "Reviews" },
+    "Login": { "isEnabled": true, "displayName": "Login" },
+    "SignUp": { "isEnabled": true, "displayName": "Sign Up" },
+    "AddressManagement": { "isEnabled": true, "displayName": "Manage Addresses" },
+    "Onboarding": { "isEnabled": true, "displayName": "Welcome" },
+    "Support": { "isEnabled": true, "displayName": "Help &amp; Support" },
+    "Beauty": { "isEnabled": true, "displayName": "Beauty" },
+    "BookingHistory": { "isEnabled": true, "displayName": "Booking History" },
+    "GenderSelection": { "isEnabled": true, "displayName": "Select Gender" },
+    "GenderServices": { "isEnabled": true, "displayName": "Gender Services" }
+  }
+}</value>
+    </entry>
+</defaultsMap>

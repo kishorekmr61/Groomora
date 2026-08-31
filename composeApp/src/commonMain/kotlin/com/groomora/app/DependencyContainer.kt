@@ -1,12 +1,14 @@
 package com.groomora.app
 
 import com.groomora.core.analytics.AnalyticsManager
-import com.groomora.core.analytics.DefaultAnalyticsManager
+import com.groomora.core.analytics.createAnalyticsManager
 import com.groomora.core.api.*
 import com.groomora.core.configuration.ConfigRepository
-import com.groomora.core.configuration.MockConfigRepository
+import com.groomora.core.configuration.createConfigRepository
 import com.groomora.core.crash.CrashReporter
-import com.groomora.core.crash.DefaultCrashReporter
+import com.groomora.core.crash.createCrashReporter
+import com.groomora.core.notifications.PushNotificationManager
+import com.groomora.core.notifications.createPushNotificationManager
 import com.groomora.core.geo.GeoRulesEngine
 import com.groomora.core.location.LocationRepository
 import com.groomora.core.location.MockLocationRepository
@@ -45,10 +47,11 @@ import com.groomora.feature.support.SupportRepository
  * Dependency container for the Groomora Customer App.
  */
 object DependencyContainer {
-    val analyticsManager: AnalyticsManager by lazy { DefaultAnalyticsManager() }
+    val analyticsManager: AnalyticsManager by lazy { createAnalyticsManager() }
     val networkConnectivityManager: com.groomora.core.network.NetworkConnectivityManager by lazy { com.groomora.core.network.DefaultNetworkConnectivityManager() }
-    val crashReporter: CrashReporter by lazy { DefaultCrashReporter() }
-    val configRepository: ConfigRepository by lazy { MockConfigRepository() }
+    var crashReporter: CrashReporter = createCrashReporter()
+    var pushNotificationManager: PushNotificationManager = createPushNotificationManager()
+    var configRepository: ConfigRepository = createConfigRepository()
     val adManager: com.groomora.core.ads.AdManager by lazy {
         com.groomora.core.ads.GoogleAdManagerImpl(analyticsManager, crashReporter)
     }

@@ -7,7 +7,15 @@ data class AppConfig(
     val maintenance: MaintenanceConfig = MaintenanceConfig(),
     val appUpdate: AppUpdateConfig = AppUpdateConfig(),
     val featureFlags: FeatureFlags = FeatureFlags(),
-    val categories: List<CategoryConfig> = emptyList()
+    val categories: List<CategoryConfig> = emptyList(),
+    val screens: Map<String, ScreenConfig> = emptyMap()
+)
+
+@Serializable
+data class ScreenConfig(
+    val isEnabled: Boolean = true,
+    val displayName: String? = null,
+    val featureFlags: Map<String, Boolean> = emptyMap()
 )
 
 @Serializable

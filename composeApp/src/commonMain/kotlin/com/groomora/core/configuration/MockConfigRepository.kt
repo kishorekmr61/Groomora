@@ -37,6 +37,37 @@ class MockConfigRepository : ConfigRepository {
                 CategoryConfig("makeup", "Makeup", null),
                 CategoryConfig("bridal", "Bridal", null),
                 CategoryConfig("home", "Home Service", null)
+            ),
+            screens = mapOf(
+                "Home" to ScreenConfig(isEnabled = true, displayName = "Home"),
+                "Discovery" to ScreenConfig(isEnabled = true, displayName = "Discover"),
+                "Services" to ScreenConfig(isEnabled = true, displayName = "Services"),
+                "ShopDetails" to ScreenConfig(isEnabled = true, displayName = "Shop Details"),
+                "ProfessionalProfile" to ScreenConfig(isEnabled = true, displayName = "Professional Profile"),
+                "Booking" to ScreenConfig(isEnabled = true, displayName = "Book Service"),
+                "Profile" to ScreenConfig(isEnabled = true, displayName = "My Profile"),
+                "EditProfile" to ScreenConfig(isEnabled = true, displayName = "Edit Profile"),
+                "Settings" to ScreenConfig(isEnabled = true, displayName = "Settings"),
+                "Favorites" to ScreenConfig(isEnabled = true, displayName = "Favorites"),
+                "Offers" to ScreenConfig(isEnabled = true, displayName = "Offers"),
+                "Loyalty" to ScreenConfig(isEnabled = true, displayName = "Loyalty"),
+                "Products" to ScreenConfig(isEnabled = true, displayName = "Store"),
+                "ProductDetails" to ScreenConfig(isEnabled = true, displayName = "Product Details"),
+                "Cart" to ScreenConfig(isEnabled = true, displayName = "Cart"),
+                "Bridal" to ScreenConfig(isEnabled = true, displayName = "Bridal Services"),
+                "Orders" to ScreenConfig(isEnabled = true, displayName = "My Orders"),
+                "Notifications" to ScreenConfig(isEnabled = true, displayName = "Notifications"),
+                "HomeService" to ScreenConfig(isEnabled = true, displayName = "Home Service"),
+                "Reviews" to ScreenConfig(isEnabled = true, displayName = "Reviews"),
+                "Login" to ScreenConfig(isEnabled = true, displayName = "Login"),
+                "SignUp" to ScreenConfig(isEnabled = true, displayName = "Sign Up"),
+                "AddressManagement" to ScreenConfig(isEnabled = true, displayName = "Manage Addresses"),
+                "Onboarding" to ScreenConfig(isEnabled = true, displayName = "Welcome"),
+                "Support" to ScreenConfig(isEnabled = true, displayName = "Help & Support"),
+                "Beauty" to ScreenConfig(isEnabled = true, displayName = "Beauty"),
+                "BookingHistory" to ScreenConfig(isEnabled = true, displayName = "Booking History"),
+                "GenderSelection" to ScreenConfig(isEnabled = true, displayName = "Select Gender"),
+                "GenderServices" to ScreenConfig(isEnabled = true, displayName = "Gender Services")
             )
         )
     )

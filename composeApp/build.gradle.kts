@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.googleGmsGoogleServices)
+    alias(libs.plugins.googleFirebaseCrashlytics)
+    alias(libs.plugins.googleFirebaseFirebasePerf)
 }
 
 kotlin {
@@ -14,12 +17,14 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
+    
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
         target.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
         }
     }
+
     sourceSets {
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -69,9 +74,22 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+        getByName("debug") {
+            isMinifyEnabled = false
+        }
+    }
+    buildFeatures {
+        buildConfig = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+dependencies {
+    implementation(libs.firebase.config)
+    implementation(libs.firebase.crashlytics)
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.perf)
+    implementation(libs.firebase.analytics)
 }
