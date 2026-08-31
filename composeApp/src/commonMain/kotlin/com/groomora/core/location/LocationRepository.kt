@@ -9,3 +9,5 @@ interface LocationRepository {
     fun getSavedAddresses(): Flow<List<Address>>
     suspend fun setDefaultAddress(addressId: String)
 }
+
+expect fun createLocationRepository(): LocationRepository

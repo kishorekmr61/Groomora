@@ -11,7 +11,7 @@ import com.groomora.core.notifications.PushNotificationManager
 import com.groomora.core.notifications.createPushNotificationManager
 import com.groomora.core.geo.GeoRulesEngine
 import com.groomora.core.location.LocationRepository
-import com.groomora.core.location.MockLocationRepository
+import com.groomora.core.location.createLocationRepository
 import com.groomora.feature.auth.AuthRepository
 import com.groomora.feature.auth.MockAuthRepository
 import com.groomora.feature.beauty.BeautyRepository
@@ -75,7 +75,7 @@ object DependencyContainer {
     // ==========================================
     // DOMAIN REPOSITORIES
     // ==========================================
-    val locationRepository: LocationRepository by lazy { MockLocationRepository() }
+    var locationRepository: LocationRepository = createLocationRepository()
     val geoRulesEngine: GeoRulesEngine by lazy { GeoRulesEngine() }
     val authRepository: AuthRepository by lazy { MockAuthRepository() }
     val discoveryRepository: DiscoveryRepository by lazy { MockDiscoveryRepository() }

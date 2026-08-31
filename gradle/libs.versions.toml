@@ -17,6 +17,7 @@ firebasePerf = "22.0.6"
 googleFirebaseFirebasePerf = "2.0.2"
 firebaseMessaging = "25.1.2"
 firebaseAnalytics = "22.2.0"
+googlePlayServicesLocation = "21.3.0"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidxActivity" }
@@ -37,6 +38,7 @@ firebase-config = { group = "com.google.firebase", name = "firebase-config", ver
 firebase-perf = { group = "com.google.firebase", name = "firebase-perf", version.ref = "firebasePerf" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging", version.ref = "firebaseMessaging" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics", version.ref = "firebaseAnalytics" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "googlePlayServicesLocation" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

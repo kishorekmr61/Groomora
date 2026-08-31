@@ -11,6 +11,10 @@ import androidx.activity.compose.setContent
 import com.groomora.core.notifications.AndroidPushNotificationManager
 import com.groomora.core.crash.AndroidCrashReporter
 import com.groomora.core.configuration.FirebaseConfigRepository
+import com.groomora.core.location.AndroidLocationRepository
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 
@@ -29,6 +33,9 @@ class MainActivity : ComponentActivity() {
         
         val pushManager = AndroidPushNotificationManager(this)
         DependencyContainer.pushNotificationManager = pushManager
+
+        val locationRepository = AndroidLocationRepository(this)
+        DependencyContainer.locationRepository = locationRepository
         
         // ... rest of init
         crashReporter.logBreadcrumb("App Started")
@@ -40,9 +47,34 @@ class MainActivity : ComponentActivity() {
 
         pushManager.initialize()
         pushManager.requestPermission()
+        
+        requestLocationPermissions()
 
         registerNetworkMonitoring()
         setContent { App() }
+    }
+
+    private fun requestLocationPermissions() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                102
+            )
+        } else {
+            MainScope().launch {
+                DependencyContainer.locationRepository.getCurrentLocation()
+            }
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 102 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            MainScope().launch {
+                DependencyContainer.locationRepository.getCurrentLocation()
+            }
+        }
     }
 
     private fun registerNetworkMonitoring() {
