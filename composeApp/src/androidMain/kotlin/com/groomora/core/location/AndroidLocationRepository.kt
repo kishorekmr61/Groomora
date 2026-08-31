@@ -1,8 +1,12 @@
 package com.groomora.core.location
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.location.LocationManager
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -24,6 +28,22 @@ class AndroidLocationRepository(private val context: Context) : LocationReposito
 
     @SuppressLint("MissingPermission")
     override suspend fun getCurrentLocation(): LocationState {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            val state = LocationState.PermissionDenied
+            _locationState.value = state
+            return state
+        }
+
+        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as? LocationManager
+        val isGpsEnabled = locationManager?.isProviderEnabled(LocationManager.GPS_PROVIDER) == true
+        val isNetworkEnabled = locationManager?.isProviderEnabled(LocationManager.NETWORK_PROVIDER) == true
+
+        if (!isGpsEnabled && !isNetworkEnabled) {
+            val state = LocationState.Error("Location services are disabled")
+            _locationState.value = state
+            return state
+        }
+
         try {
             val location = fusedLocationClient.getCurrentLocation(
                 Priority.PRIORITY_HIGH_ACCURACY,

@@ -30,6 +30,7 @@ fun PaymentScreen(
     onBack: () -> Unit
 ) {
     var selectedMethod by remember { mutableStateOf("UPI") }
+    var isConsentChecked by remember { mutableStateOf(false) }
     var isProcessing by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -52,6 +53,7 @@ fun PaymentScreen(
             Surface(shadowElevation = 8.dp) {
                 GroomoraPrimaryButton(
                     text = "Pay ₹$amount",
+                    enabled = isConsentChecked && !isProcessing,
                     onClick = {
                         isProcessing = true
                         // In a real app, we would process payment and place order here
@@ -123,6 +125,28 @@ fun PaymentScreen(
             }
             item {
                 PaymentMethodItem("Net Banking", "NB", selectedMethod == "NB") { selectedMethod = "NB" }
+            }
+
+            item {
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isConsentChecked = !isConsentChecked }
+                        .padding(vertical = 8.dp)
+                ) {
+                    Checkbox(
+                        checked = isConsentChecked,
+                        onCheckedChange = { isConsentChecked = it },
+                        colors = CheckboxDefaults.colors(checkedColor = Charcoal)
+                    )
+                    Text(
+                        text = "I agree to the terms and conditions and authorize this transaction.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
             }
         }
     }

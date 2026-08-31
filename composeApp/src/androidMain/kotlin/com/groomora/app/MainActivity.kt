@@ -12,6 +12,7 @@ import com.groomora.core.notifications.AndroidPushNotificationManager
 import com.groomora.core.crash.AndroidCrashReporter
 import com.groomora.core.configuration.FirebaseConfigRepository
 import com.groomora.core.location.AndroidLocationRepository
+import com.groomora.core.location.LocationState
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
@@ -76,7 +77,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 102 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == 102) {
             MainScope().launch {
                 DependencyContainer.locationRepository.getCurrentLocation()
             }

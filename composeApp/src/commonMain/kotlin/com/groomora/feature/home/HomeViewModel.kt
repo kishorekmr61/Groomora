@@ -16,6 +16,9 @@ class HomeViewModel(
     private val _state = MutableStateFlow(HomeState())
     val state: StateFlow<HomeState> = _state.asStateFlow()
 
+    val locationState: StateFlow<LocationState> = locationRepository.getLocationUpdates()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LocationState.Loading)
+
     init {
         onIntent(HomeIntent.LoadHomeData)
     }
