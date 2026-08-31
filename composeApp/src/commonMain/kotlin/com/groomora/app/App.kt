@@ -606,7 +606,9 @@ fun App() {
                 }
                 CartScreen(
                     viewModel = productViewModel,
-                    onNavigateToCheckout = { navController.navigate(Screen.ProductCheckout) },
+                    onNavigateToCheckout = { 
+                        navController.navigate(Screen.ProductCheckout) 
+                    },
                     onBack = { navController.popBackStack() }
                 )
             }

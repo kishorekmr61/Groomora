@@ -36,6 +36,9 @@ import androidx.compose.animation.core.*
 import androidx.compose.ui.graphics.graphicsLayer
 import com.groomora.feature.discovery.Shop
 import kotlinx.coroutines.launch
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 
 @OptIn(ExperimentalMaterial3Api::class)
 
@@ -199,8 +202,8 @@ fun HomeScreen(
             )
         }
     ) { padding ->
-        if (state.isLoading) {
-            GroomoraLoadingState()
+        if (state.isLoading || state.location == null) {
+            HomeLoadingShimmer(modifier = Modifier.padding(padding))
         } else {
             LazyColumn(
                 modifier = Modifier
@@ -823,6 +826,86 @@ fun HomeScreen(
                 initialIndex = selectedWorkPhotoIndex!!,
                 onDismissRequest = { selectedWorkPhotoIndex = null }
             )
+        }
+    }
+}
+
+@Composable
+fun HomeLoadingShimmer(modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "homeShimmer")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shimmerAlpha"
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(WarmIvory)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Search bar placeholder
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .graphicsLayer(alpha = alpha)
+                .background(Color.LightGray, RoundedCornerShape(28.dp))
+        )
+
+        // Banner placeholder
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .graphicsLayer(alpha = alpha)
+                .background(Color.LightGray, RoundedCornerShape(16.dp))
+        )
+
+        // Action icons placeholder
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            repeat(5) {
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .graphicsLayer(alpha = alpha)
+                        .background(Color.LightGray, CircleShape)
+                )
+            }
+        }
+
+        // Section Title placeholder
+        Box(
+            modifier = Modifier
+                .width(200.dp)
+                .height(24.dp)
+                .graphicsLayer(alpha = alpha)
+                .background(Color.LightGray, RoundedCornerShape(4.dp))
+        )
+
+        // Grid placeholders
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            repeat(2) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(120.dp)
+                        .graphicsLayer(alpha = alpha)
+                        .background(Color.LightGray, RoundedCornerShape(12.dp))
+                )
+            }
         }
     }
 }
