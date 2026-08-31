@@ -78,6 +78,29 @@ class FirebaseConfigRepository : ConfigRepository {
     }
 
     override fun checkUpdateStatus(currentVersion: String, isIos: Boolean): UpdateStatus {
+        val currentConfig = _config.value.appUpdate
+        val storeUrl = if (isIos) currentConfig.appStoreUrl else currentConfig.playStoreUrl
+
+        // Check force update: current < minSupported
+        if (compareVersions(currentVersion, currentConfig.minSupportedVersion) < 0) {
+            return UpdateStatus.ForceUpdateRequired(
+                minVersion = currentConfig.minSupportedVersion,
+                title = currentConfig.forceUpdateTitle,
+                message = currentConfig.forceUpdateMessage,
+                storeUrl = storeUrl
+            )
+        }
+
+        // Check flexible update: current < latest
+        if (compareVersions(currentVersion, currentConfig.latestVersion) < 0) {
+            return UpdateStatus.FlexibleUpdateAvailable(
+                latestVersion = currentConfig.latestVersion,
+                title = currentConfig.flexibleUpdateTitle,
+                message = currentConfig.flexibleUpdateMessage,
+                storeUrl = storeUrl
+            )
+        }
+
         return UpdateStatus.NoUpdateRequired
     }
 
