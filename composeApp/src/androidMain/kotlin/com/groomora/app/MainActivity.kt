@@ -14,6 +14,9 @@ import com.groomora.core.configuration.FirebaseConfigRepository
 import com.groomora.core.location.AndroidLocationRepository
 import com.groomora.core.location.LocationState
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import kotlinx.coroutines.MainScope
@@ -21,6 +24,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
+    private var locationReceiver: BroadcastReceiver? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +56,21 @@ class MainActivity : ComponentActivity() {
         requestLocationPermissions()
 
         registerNetworkMonitoring()
+        registerLocationReceiver()
         setContent { App() }
+    }
+
+    private fun registerLocationReceiver() {
+        locationReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action == "android.location.PROVIDERS_CHANGED") {
+                    MainScope().launch {
+                        DependencyContainer.locationRepository.getCurrentLocation()
+                    }
+                }
+            }
+        }
+        registerReceiver(locationReceiver, IntentFilter("android.location.PROVIDERS_CHANGED"))
     }
 
     override fun onResume() {
@@ -131,6 +149,11 @@ class MainActivity : ComponentActivity() {
             val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             try {
                 connectivityManager?.unregisterNetworkCallback(it)
+            } catch (_: Exception) {}
+        }
+        locationReceiver?.let {
+            try {
+                unregisterReceiver(it)
             } catch (_: Exception) {}
         }
     }

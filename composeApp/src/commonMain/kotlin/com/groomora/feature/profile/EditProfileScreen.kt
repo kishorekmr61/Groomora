@@ -5,8 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -18,14 +16,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.groomora.design.*
 import com.groomora.design.components.*
 import com.groomora.feature.auth.User
 import com.groomora.feature.auth.UserGender
+import com.groomora.core.media.rememberImagePicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,18 +40,12 @@ fun EditProfileScreen(
     var selectedGender by remember(currentUser) { mutableStateOf(currentUser?.gender ?: UserGender.UNSPECIFIED) }
     
     var showImagePickerDialog by remember { mutableStateOf(false) }
-    var customUrlInput by remember { mutableStateOf("") }
-    var showCustomUrlField by remember { mutableStateOf(false) }
     var showSavedSnackbar by remember { mutableStateOf(false) }
 
-    val presetAvatars = listOf(
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80",
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
-        "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&q=80",
-        "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&q=80",
-        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=400&q=80",
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&q=80"
-    )
+    val imagePicker = rememberImagePicker { uri ->
+        profileImageUrl = uri
+        showImagePickerDialog = false
+    }
 
     Scaffold(
         topBar = {
@@ -119,7 +110,7 @@ fun EditProfileScreen(
                             }
                         }
 
-                        // Camera badge edit button
+                        // Edit button badge
                         IconButton(
                             onClick = { showImagePickerDialog = true },
                             modifier = Modifier
@@ -136,7 +127,6 @@ fun EditProfileScreen(
                             )
                         }
                     }
-
 
                     Spacer(Modifier.height(10.dp))
 
@@ -293,73 +283,43 @@ fun EditProfileScreen(
             }
         }
 
-        // Avatar Upload / Select Dialog
+        // Photo Source Picker Dialog
         if (showImagePickerDialog) {
             AlertDialog(
                 onDismissRequest = { showImagePickerDialog = false },
                 title = {
                     Text(
-                        "Choose Profile Photo",
+                        "Change Profile Photo",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = AppText
                     )
                 },
                 text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Text(
-                            "Select from gallery presets or enter a custom photo link:",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MutedText
-                        )
-
-                        // Preset Avatar Row
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                    ) {
+                        OutlinedButton(
+                            onClick = { imagePicker.takePhoto() },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Charcoal),
+                            shape = MaterialTheme.shapes.medium
                         ) {
-                            items(presetAvatars) { url ->
-                                val isChosen = profileImageUrl == url
-                                Box(
-                                    modifier = Modifier
-                                        .size(60.dp)
-                                        .clip(CircleShape)
-                                        .background(Charcoal)
-                                        .border(
-                                            width = if (isChosen) 3.dp else 1.dp,
-                                            color = if (isChosen) HoneyAmber else BorderGray,
-                                            shape = CircleShape
-                                        )
-                                        .clickable {
-                                            profileImageUrl = url
-                                            showImagePickerDialog = false
-                                        },
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    GroomoraImage(
-                                        url = url,
-                                        contentDescription = "Avatar preset",
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                }
-                            }
+                            Icon(Icons.Default.Edit, contentDescription = null)
+                            Spacer(Modifier.width(12.dp))
+                            Text("Take Photo with Camera")
                         }
 
-                        if (!showCustomUrlField) {
-                            TextButton(onClick = { showCustomUrlField = true }) {
-                                Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
-                                Text("Enter image URL directly")
-                            }
-                        } else {
-
-                            GroomoraOutlinedTextField(
-                                value = customUrlInput,
-                                onValueChange = { customUrlInput = it },
-                                label = "Photo URL",
-                                placeholder = "https://example.com/photo.jpg"
-                            )
+                        OutlinedButton(
+                            onClick = { imagePicker.pickImage() },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Charcoal),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Icon(Icons.Default.Person, contentDescription = null)
+                            Spacer(Modifier.width(12.dp))
+                            Text("Choose from Gallery")
                         }
 
                         if (profileImageUrl.isNotBlank()) {
@@ -368,31 +328,20 @@ fun EditProfileScreen(
                                     profileImageUrl = ""
                                     showImagePickerDialog = false
                                 },
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
                                 colors = ButtonDefaults.textButtonColors(contentColor = ErrorRed)
                             ) {
-                                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(16.dp))
-                                Spacer(Modifier.width(6.dp))
+                                Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
                                 Text("Remove current photo")
                             }
                         }
                     }
                 },
-                confirmButton = {
-                    if (showCustomUrlField && customUrlInput.isNotBlank()) {
-                        Button(
-                            onClick = {
-                                profileImageUrl = customUrlInput.trim()
-                                showImagePickerDialog = false
-                            },
-                            colors = ButtonDefaults.buttonColors(containerColor = HoneyAmber)
-                        ) {
-                            Text("Use URL")
-                        }
-                    }
-                },
+                confirmButton = {},
                 dismissButton = {
                     TextButton(onClick = { showImagePickerDialog = false }) {
-                        Text("Close", color = AppText)
+                        Text("Cancel", color = Color.Gray)
                     }
                 },
                 containerColor = Color.White

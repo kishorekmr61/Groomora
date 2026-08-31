@@ -10,12 +10,11 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.groomora.core.location.Address
 import com.groomora.design.Champagne
@@ -29,6 +28,7 @@ fun AddressManagementScreen(
     onBack: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    var showAddAddressDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -48,7 +48,7 @@ fun AddressManagementScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* TODO: Add address dialog */ },
+                onClick = { showAddAddressDialog = true },
                 containerColor = Charcoal,
                 contentColor = Champagne
             ) {
@@ -82,6 +82,90 @@ fun AddressManagementScreen(
             }
         }
     }
+
+    if (showAddAddressDialog) {
+        AddAddressDialog(
+            onDismiss = { showAddAddressDialog = false },
+            onSave = { address ->
+                viewModel.onIntent(AddressIntent.AddAddress(address))
+                showAddAddressDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun AddAddressDialog(
+    onDismiss: () -> Unit,
+    onSave: (Address) -> Unit
+) {
+    var label by remember { mutableStateOf("") }
+    var fullAddress by remember { mutableStateOf("") }
+    var city by remember { mutableStateOf("") }
+    var pincode by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add New Address", fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = label,
+                    onValueChange = { label = it },
+                    label = { Text("Label (e.g. Home, Office)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = fullAddress,
+                    onValueChange = { fullAddress = it },
+                    label = { Text("Full Address") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 2
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = city,
+                        onValueChange = { city = it },
+                        label = { Text("City") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = pincode,
+                        onValueChange = { pincode = it },
+                        label = { Text("Pincode") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (fullAddress.isNotBlank() && city.isNotBlank()) {
+                        onSave(
+                            Address(
+                                label = label.ifBlank { "Address" },
+                                fullAddress = fullAddress,
+                                city = city,
+                                state = "",
+                                country = "India",
+                                pincode = pincode,
+                                isDefault = false
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Charcoal, contentColor = Champagne)
+            ) {
+                Text("Save Address")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = Charcoal)
+            }
+        }
+    )
 }
 
 @Composable

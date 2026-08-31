@@ -24,10 +24,14 @@ class AndroidLocationRepository(private val context: Context) : LocationReposito
     
     private val _locationState = MutableStateFlow<LocationState>(LocationState.Loading)
     
+    private val _savedAddresses = MutableStateFlow<List<Address>>(emptyList())
+    
     override fun getLocationUpdates(): Flow<LocationState> = _locationState.asStateFlow()
 
     @SuppressLint("MissingPermission")
     override suspend fun getCurrentLocation(): LocationState {
+        _locationState.value = LocationState.Loading
+
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             val state = LocationState.PermissionDenied
             _locationState.value = state
